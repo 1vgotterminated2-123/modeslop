@@ -1,175 +1,265 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SUBLEVELS — A Modespice-inspired 3D obby</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THE NIGHT SHIFT — Anomaly Division</title>
+<meta name="description" content="A first-person anomaly horror game. Watch the house. Report what changes. Survive until 6 AM.">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap');
-:root{--ink:#eaf1ff;--muted:#8c9ab5;--cyan:#70eaff;--pink:#ff78c8;--panel:rgba(9,15,30,.88);--line:rgba(151,190,255,.18)}
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#070b16;color:var(--ink);font-family:Inter,system-ui,sans-serif}
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap');
+:root{--ink:#d8dfd8;--muted:#84918a;--green:#9bc5a4;--red:#d77c72;--panel:rgba(9,14,13,.94);--line:rgba(181,204,187,.17)}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#050807;color:var(--ink);font-family:Manrope,Arial,sans-serif}
 canvas{display:block}#game{position:fixed;inset:0}
-#vignette{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 42%,rgba(2,4,12,.68) 100%)}
-#hud{position:fixed;inset:0;pointer-events:none}
-.top{position:absolute;top:18px;left:20px;right:20px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
-.brand{font:900 28px 'Barlow Condensed';letter-spacing:2px;text-shadow:0 0 22px #58dfff66}.brand small{display:block;font:600 10px Inter;letter-spacing:3px;color:#92a6c9;margin-top:-2px}
-.pill{background:rgba(8,14,29,.72);border:1px solid var(--line);border-radius:12px;padding:10px 13px;backdrop-filter:blur(12px);box-shadow:0 10px 35px #0005}
-.stats{display:flex;gap:8px;align-items:center;font-size:12px;color:#b8c7e2}.stats strong{color:#fff;font-size:13px}
-#healthWrap{width:150px;height:7px;background:#263148;border-radius:9px;overflow:hidden;margin-top:5px}#health{height:100%;width:100%;background:linear-gradient(90deg,#ff5b8a,#ffb66e);transition:width .2s}
-#modeInfo{position:absolute;left:20px;bottom:20px;max-width:330px}.modeTitle{font:800 25px 'Barlow Condensed';letter-spacing:1px}.sub{font-size:11px;color:#9eacc5;line-height:1.5;margin-top:4px}
-#hint{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);padding:9px 14px;border-radius:10px;background:#08101fc9;border:1px solid var(--line);font-size:12px;color:#b9c9e6;white-space:nowrap}
-#toast{position:absolute;top:90px;left:50%;transform:translateX(-50%);padding:11px 18px;border:1px solid #72eaff66;background:#071629eF;border-radius:12px;font-size:13px;opacity:0;transition:opacity .25s;box-shadow:0 0 30px #5bdfff22}
-#chart{position:fixed;inset:0;background:rgba(3,7,17,.78);backdrop-filter:blur(12px);display:none;align-items:center;justify-content:center;z-index:5;padding:18px}
-.chartbox{width:min(900px,96vw);max-height:92vh;overflow:auto;border:1px solid #83baff38;border-radius:20px;background:linear-gradient(145deg,#101b32f5,#080e1df7);padding:22px;box-shadow:0 25px 90px #000b}
-.charthead{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}.charthead h1{font:900 30px 'Barlow Condensed';letter-spacing:2px;margin:0}.charthead p{margin:3px 0 0;color:#8fa1c1;font-size:11px}
-.close{pointer-events:auto;border:1px solid var(--line);background:#17243d;color:white;border-radius:9px;padding:9px 13px;cursor:pointer}
-.zone{font:800 12px 'Barlow Condensed';letter-spacing:2px;color:#79dff5;margin:18px 0 9px}
-.nodes{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:9px}
-.node{pointer-events:auto;text-align:left;border:1px solid #7893ba33;background:linear-gradient(145deg,#18243b,#10182a);border-radius:12px;padding:12px;color:#dce8ff;cursor:pointer;transition:.16s;min-height:76px}
-.node:hover{transform:translateY(-2px);border-color:#71eaffaa;box-shadow:0 8px 22px #42cfff20}
-.node.locked{opacity:.35;filter:grayscale(1);cursor:not-allowed}.node.current{border-color:#75eaff;background:linear-gradient(145deg,#173d51,#14233b);box-shadow:inset 0 0 20px #53dfff18}
-.node b{display:block;font:800 18px 'Barlow Condensed';letter-spacing:.4px}.node small{display:block;color:#90a2c2;font-size:10px;margin-top:4px}
-.node .symbol{float:right;color:#7ceaff;font:800 20px 'Barlow Condensed'}
-#startScreen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:6;background:radial-gradient(ellipse at 50% 35%,#182d4c 0%,#080d1c 60%,#050811 100%);padding:20px}
-.startbox{width:min(600px,94vw);text-align:center;border:1px solid #86cfff35;background:#081226c9;border-radius:22px;padding:35px 28px;box-shadow:0 25px 90px #0009}
-.kicker{font-size:10px;letter-spacing:4px;color:#78e6ff;font-weight:800}.logo{font:900 clamp(48px,10vw,86px)/.88 'Barlow Condensed';letter-spacing:1px;margin:15px 0 12px;text-shadow:0 0 35px #62dcff50}.logo span{color:#78eaff}.startbox p{max-width:420px;margin:0 auto 22px;color:#a8b7d1;font-size:13px;line-height:1.7}
-.primary{pointer-events:auto;border:0;border-radius:10px;padding:13px 25px;background:linear-gradient(100deg,#59d8f4,#9b9aff);color:#06101d;font-weight:900;letter-spacing:1px;cursor:pointer;box-shadow:0 8px 30px #5bdfff33}
-.controls{display:flex;justify-content:center;gap:15px;flex-wrap:wrap;margin-top:22px;color:#8496b6;font-size:10px}.key{padding:3px 6px;border:1px solid #62779866;border-radius:5px;color:#d5e5ff}
-#mobile{display:none;position:fixed;bottom:90px;right:16px;gap:8px;z-index:3;pointer-events:auto}#mobile button{width:54px;height:54px;border-radius:50%;border:1px solid #a4dfff55;background:#0b1b30bb;color:#fff;font-size:18px}
-@media(max-width:700px){.top{top:10px;left:10px;right:10px}.brand{font-size:22px}.stats{font-size:10px}.pill{padding:8px}.topright .pill:nth-child(2){display:none}#modeInfo{left:10px;bottom:12px}.modeTitle{font-size:21px}#hint{bottom:14px;font-size:10px}#mobile{display:flex}.chartbox{padding:15px}.startbox{padding:28px 18px}}
+#vignette{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 35%,rgba(0,0,0,.38) 100%);z-index:2}
+#grain{position:fixed;inset:-50%;pointer-events:none;z-index:3;opacity:.075;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.92' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.6'/%3E%3C/svg%3E");animation:grain .22s steps(2) infinite}
+@keyframes grain{0%{transform:translate(0,0)}25%{transform:translate(2%,-1%)}50%{transform:translate(-1%,2%)}75%{transform:translate(1%,1%)}100%{transform:translate(-2%,-1%)}}
+.mono{font-family:'DM Mono',monospace;letter-spacing:.08em;text-transform:uppercase}
+#hud{position:fixed;z-index:5;inset:0;pointer-events:none;display:none}
+.topbar{position:absolute;top:0;left:0;right:0;padding:22px 28px;display:flex;justify-content:space-between;align-items:flex-start;background:linear-gradient(#050807d9,transparent)}
+.brand{font:500 11px 'DM Mono';letter-spacing:.2em;color:#b5c6b8}.brand b{color:var(--green);font-weight:500}
+.clock{text-align:right;font:500 20px 'DM Mono';letter-spacing:.12em}.clock small{display:block;font-size:9px;color:var(--muted);margin-top:4px}
+#objective{position:absolute;left:28px;top:90px;font:10px 'DM Mono';color:#a5b1a8;line-height:1.8;letter-spacing:.08em}
+#objective strong{display:block;color:#e1e8df;font-size:11px;font-weight:500}
+#status{position:absolute;right:28px;top:90px;text-align:right;font:10px 'DM Mono';color:#a5b1a8;line-height:1.8}
+#status strong{display:block;color:var(--green);font-size:11px;font-weight:500}
+.bottom{position:absolute;bottom:22px;left:28px;right:28px;display:flex;justify-content:space-between;align-items:end}
+.hint{font:9px 'DM Mono';color:#9aa69d;letter-spacing:.08em;line-height:1.8}
+#crosshair{position:fixed;z-index:4;left:50%;top:50%;width:14px;height:14px;transform:translate(-50%,-50%);pointer-events:none;opacity:.7;display:none}
+#crosshair:before,#crosshair:after{content:"";position:absolute;background:#dce7dd;box-shadow:0 0 5px #000}
+#crosshair:before{width:1px;height:14px;left:6px}#crosshair:after{height:1px;width:14px;top:6px}
+#interact{position:absolute;bottom:84px;left:50%;transform:translateX(-50%);font:10px 'DM Mono';color:#e0e8df;text-shadow:0 1px 5px #000;opacity:0}
+#tabletBtn{position:absolute;right:28px;bottom:82px;pointer-events:auto;border:1px solid #91b49a66;background:#101a16dd;color:#c5ddca;padding:12px 16px;font:10px 'DM Mono';letter-spacing:.12em;cursor:pointer}
+#tabletBtn:hover{background:#1c3025}
+#tablet{position:fixed;z-index:10;right:24px;top:50%;transform:translateY(-50%) translateX(120%);width:min(390px,calc(100vw - 32px));max-height:86vh;overflow:auto;background:linear-gradient(145deg,#18211d,#0b100e 70%);border:1px solid #8ca99566;box-shadow:0 20px 80px #000c;padding:22px;transition:transform .28s cubic-bezier(.2,.8,.2,1);pointer-events:auto}
+#tablet.open{transform:translateY(-50%) translateX(0)}
+.tablet-head{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);padding-bottom:15px;margin-bottom:18px}
+.tablet-head h2{font:500 13px 'DM Mono';letter-spacing:.16em;margin:0;color:#cde0d0}
+.tablet-head span{font:9px 'DM Mono';color:#718379}
+.section-label{font:9px 'DM Mono';color:#82958a;letter-spacing:.16em;margin:17px 0 9px}
+.room-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.room-btn,.type-btn{background:#111a16;border:1px solid #60776a55;color:#b9c8bd;padding:11px 9px;text-align:left;font:10px 'DM Mono';letter-spacing:.05em;cursor:pointer;transition:.15s}
+.room-btn:hover,.type-btn:hover{border-color:#a0c6a8;color:#e1eee3}
+.room-btn.active,.type-btn.active{background:#23382b;border-color:#a1c7a8;color:#e2f2e4}
+.type-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+#report{width:100%;margin-top:18px;padding:14px;background:#9ebda4;color:#101812;border:0;font:500 10px 'DM Mono';letter-spacing:.16em;cursor:pointer}
+#report:hover{background:#c0d9c4}#report:disabled{opacity:.35;cursor:not-allowed}
+#tablet-note{font:10px/1.6 'DM Mono';color:#839188;margin-top:12px;min-height:30px}
+#tablet-close{background:none;border:0;color:#82958a;font:16px 'DM Mono';cursor:pointer}
+#toast{position:fixed;z-index:12;top:20%;left:50%;transform:translate(-50%,-10px);padding:12px 18px;background:#0b120feF;border:1px solid #78968177;color:#d9e6dc;font:10px 'DM Mono';letter-spacing:.08em;opacity:0;transition:.25s;pointer-events:none;text-align:center;max-width:90vw}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+#damage{position:fixed;inset:0;z-index:6;pointer-events:none;background:radial-gradient(ellipse,transparent 35%,#6d0808aa 100%);opacity:0;transition:opacity .2s}
+#start,#end{position:fixed;z-index:20;inset:0;background:radial-gradient(ellipse at 50% 45%,#18221d 0,#080d0b 55%,#030504 100%);display:flex;align-items:center;justify-content:center;padding:24px}
+.start-card{width:min(680px,100%);text-align:center}
+.kicker{font:10px 'DM Mono';letter-spacing:.3em;color:#8ba995}
+h1{font-size:clamp(42px,9vw,86px);line-height:.9;letter-spacing:-.07em;margin:22px 0 16px;font-weight:800;color:#e3e9e2}
+h1 em{font-style:normal;color:#91b59a}
+.subtitle{font:11px/1.9 'DM Mono';color:#9aa79d;letter-spacing:.07em;max-width:480px;margin:0 auto}
+.warning{margin:30px auto 25px;padding:14px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);max-width:440px;font:9px/1.9 'DM Mono';color:#89968c;letter-spacing:.06em}
+.primary{border:1px solid #a3c5aa;background:#a3c5aa;color:#101812;padding:15px 32px;font:500 10px 'DM Mono';letter-spacing:.18em;cursor:pointer}
+.primary:hover{background:#c4ddc9}
+.controls{margin-top:25px;color:#66766b;font:9px/2 'DM Mono';letter-spacing:.06em}
+#end{display:none}.end-title{font-size:clamp(40px,8vw,72px);font-weight:800;letter-spacing:-.06em;margin:20px 0}
+#endText{font:11px/2 'DM Mono';color:#a3b0a5;margin:0 auto 26px;max-width:450px}
+#mobileControls{display:none;position:fixed;z-index:8;bottom:18px;left:16px;right:16px;pointer-events:none}
+#mobileControls button{pointer-events:auto;background:#0b1411bb;border:1px solid #a1bba466;color:#d5e3d8;padding:14px;font:10px 'DM Mono'}
+@media(max-width:700px){.topbar{padding:15px}.bottom{left:15px;right:15px;bottom:15px}#objective{left:15px;top:75px}#status{right:15px;top:75px}#tablet{right:8px;width:calc(100vw - 16px)}#tabletBtn{right:15px;bottom:76px}.hint{max-width:45%}#mobileControls{display:flex;justify-content:space-between} }
 </style>
 </head>
 <body>
-<div id="game"></div><div id="vignette"></div>
+<div id="game"></div><div id="vignette"></div><div id="grain"></div><div id="damage"></div>
+<div id="crosshair"></div>
 <div id="hud">
- <div class="top">
-  <div class="brand">SUBLEVELS<small>AN ORIGINAL MODESPICE-INSPIRED OBBY</small></div>
-  <div class="topright" style="display:flex;gap:8px">
-   <div class="pill stats"><div>HEALTH<div id="healthWrap"><div id="health"></div></div></div><strong id="hpText">100 / 100</strong></div>
-   <div class="pill stats"><span>SUBLEVEL</span><strong id="sublevel">LOBBY</strong></div>
-   <div class="pill stats"><span>BEST</span><strong id="best">Ø</strong></div>
-  </div>
- </div>
- <div id="modeInfo" class="pill"><div class="modeTitle" id="modeTitle">THE HUB</div><div class="sub" id="modeDesc">Choose a sublevel from the chart. Every mode has its own route and rules.</div></div>
- <div id="hint">WASD move · SPACE jump · SHIFT sprint · C chart</div>
- <div id="toast"></div>
+  <div class="topbar"><div class="brand">NIGHTWATCH <b>/</b> FIELD UNIT 07</div><div class="clock"><span id="time">12:00 AM</span><small>SHIFT ENDS AT 06:00 AM</small></div></div>
+  <div id="objective"><strong>CONTRACT 014 — HARROW HOUSE</strong>Observe. Identify. Report.<br>Do not approach anything unfamiliar.</div>
+  <div id="status"><strong id="healthText">● ● ●</strong><span id="threatText">THREAT: LOW</span><br><span id="reportCount">REPORTS: 0 / 0</span></div>
+  <div class="bottom"><div class="hint">WASD MOVE · MOUSE LOOK<br>SHIFT SPRINT · F FLASHLIGHT</div><div class="hint" style="text-align:right">R OPEN REPORT TABLET<br>ESC RELEASE MOUSE</div></div>
+  <div id="interact">[ E ] INTERACT</div>
+  <button id="tabletBtn">[ R ] REPORT TABLET</button>
 </div>
-<div id="chart"><div class="chartbox">
- <div class="charthead"><div><h1>SUBLEVEL CHART</h1><p>Connected routes, side paths, and secrets. Select an unlocked entrance.</p></div><button class="close" id="closeChart">CLOSE [C]</button></div>
- <div class="zone">ZONE 1 — THE STARTING DESCENT</div><div class="nodes" id="zone1"></div>
- <div class="zone">ZONE 2 — NORMALITY</div><div class="nodes" id="zone2"></div>
- <div class="zone">SECRET ROUTES</div><div class="nodes" id="secrets"></div>
- <p style="font-size:10px;color:#7184a5;margin:18px 2px 0">Progress is saved locally. This is a compact original prototype, not a recreation of the Roblox experience.</p>
+<div id="tablet">
+  <div class="tablet-head"><h2>FIELD REPORT / 014</h2><span>SECURE LINE ●</span><button id="tablet-close">×</button></div>
+  <div class="section-label">01 / SELECT LOCATION</div>
+  <div class="room-grid" id="roomGrid"></div>
+  <div class="section-label">02 / CLASSIFY OBSERVATION</div>
+  <div class="type-grid" id="typeGrid"></div>
+  <button id="report">TRANSMIT REPORT ↗</button>
+  <div id="tablet-note">Select the room and the most likely anomaly type. False reports waste time.</div>
+</div>
+<div id="toast"></div>
+<div id="mobileControls"><button id="flashBtn">FLASHLIGHT</button><button id="mobileTablet">REPORT</button></div>
+<div id="start"><div class="start-card">
+  <div class="kicker">ANOMALY DIVISION PRESENTS</div>
+  <h1>THE NIGHT<br><em>SHIFT.</em></h1>
+  <p class="subtitle">A routine observation contract at 1147 Harrow Lane.<br>Six hours. One house. Nothing should change.</p>
+  <div class="warning">YOUR TASK IS SIMPLE: WATCH THE HOUSE, REPORT ANYTHING THAT DOES NOT BELONG, AND REMAIN ON DUTY UNTIL 6 AM.<br><span style="color:#c17e72">IF YOU SEE SOMEONE IN THE HOUSE, DO NOT ASSUME THEY ARE A RESIDENT.</span></div>
+  <button class="primary" id="startBtn">BEGIN NIGHT SHIFT</button>
+  <div class="controls">WASD — MOVE &nbsp; / &nbsp; MOUSE — LOOK &nbsp; / &nbsp; R — TABLET<br>F — FLASHLIGHT &nbsp; / &nbsp; SHIFT — RUN &nbsp; / &nbsp; ESC — PAUSE MOUSE</div>
 </div></div>
-<div id="startScreen"><div class="startbox">
- <div class="kicker">A CONNECTED WORLD OF MODES</div>
- <div class="logo">SUB<span>LEVELS</span></div>
- <p>A strange lobby. A chart full of doors. Some routes are easy, some are cruel, and a few are probably a bad idea. Find your way down.</p>
- <button class="primary" id="play">ENTER THE LOBBY</button>
- <div class="controls"><span><i class="key">W A S D</i> Move</span><span><i class="key">SPACE</i> Jump</span><span><i class="key">SHIFT</i> Sprint</span><span><i class="key">C</i> Chart</span></div>
-</div></div>
-<div id="mobile"><button id="ml">◀</button><button id="mf">▲</button><button id="mr">▶</button><button id="mj">⤒</button></div>
+<div id="end"><div class="start-card"><div class="kicker" id="endKicker">SHIFT COMPLETE</div><div class="end-title" id="endTitle">06:00 AM</div><p id="endText"></p><button class="primary" id="againBtn">WORK ANOTHER SHIFT</button></div></div>
+
 <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-const mount=document.getElementById('game');
-const scene=new THREE.Scene();scene.background=new THREE.Color(0x080e1c);scene.fog=new THREE.Fog(0x080e1c,24,95);
-const camera=new THREE.PerspectiveCamera(68,innerWidth/innerHeight,.1,220);
-const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;mount.appendChild(renderer.domElement);
-scene.add(new THREE.HemisphereLight(0x9ebfff,0x172033,1.2));
-const keyLight=new THREE.DirectionalLight(0xd9edff,2.2);keyLight.position.set(-12,22,10);keyLight.castShadow=true;keyLight.shadow.mapSize.set(2048,2048);scene.add(keyLight);
-const point=new THREE.PointLight(0x55dfff,35,45);point.position.set(0,8,0);scene.add(point);
-const mats={floor:new THREE.MeshStandardMaterial({color:0x17253c,roughness:.8}),wall:new THREE.MeshStandardMaterial({color:0x263754,roughness:.7}),trim:new THREE.MeshStandardMaterial({color:0x70ddf5,emissive:0x17627b,emissiveIntensity:1.4}),danger:new THREE.MeshStandardMaterial({color:0xf34e79,emissive:0x76142c,emissiveIntensity:1.1}),safe:new THREE.MeshStandardMaterial({color:0x51dba7,emissive:0x14583e,emissiveIntensity:.7}),gold:new THREE.MeshStandardMaterial({color:0xf6c96b,emissive:0x68400a,emissiveIntensity:.8})};
-let solids=[],hazards=[],triggers=[],decor=[],activeMode='LOBBY',checkpoint={x:0,y:1,z:0},player,vel=new THREE.Vector3(),onGround=false,hp=100,maxHp=100,invuln=0,modeTime=0,chartOpen=false,started=false,keys={},mobile={f:0,s:0},lastSafe=0,unlocked=new Set(['Ø','<<<','<<','<','>','∃','E','Normal','Medium']),completed=new Set();
+
 const $=id=>document.getElementById(id);
-function mat(color,em=0){return new THREE.MeshStandardMaterial({color,emissive:em,emissiveIntensity:em?1:0,roughness:.65})}
-function box(x,y,z,w,h,d,material,collide=true){let m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;scene.add(m);if(collide)solids.push({x,y,z,w,h,d,mesh:m});return m}
-function glow(x,y,z,r,color=0x6eeaff){let m=new THREE.Mesh(new THREE.SphereGeometry(r,16,12),new THREE.MeshBasicMaterial({color}));m.position.set(x,y,z);scene.add(m);return m}
-function platform(x,z,w,d,y=0,material=mats.floor){box(x,y-.35,z,w,.7,d,material,true);box(x,y+.015,z,w,.06,d,mats.trim,false)}
-function wall(x,z,w,d,h=4,y=1.65){box(x,y,z,w,h,d,mats.wall,true);box(x,y+h/2,z,w,.09,d,mats.trim,false)}
-function hazard(x,z,w,d,type='spike',y=.12){let m=box(x,y,z,w,.18,d,mats.danger,false);hazards.push({x,z,w,d,type,mesh:m,base:y,phase:Math.random()*4});return m}
-function pad(x,z,color=0x56e5bb,label='CHECKPOINT'){let p=new THREE.Mesh(new THREE.CylinderGeometry(.8,.8,.14,32),new THREE.MeshStandardMaterial({color,emissive:color,emissiveIntensity:.75}));p.position.set(x,.12,z);scene.add(p);glow(x,.45,z,.12,color);triggers.push({x,z,r:1.1,type:'checkpoint',label});return p}
-function portal(x,z,label,id,color=0x6eeaff){let g=new THREE.Group();let ring=new THREE.Mesh(new THREE.TorusGeometry(1.1,.13,12,40),new THREE.MeshStandardMaterial({color,emissive:color,emissiveIntensity:1.3}));ring.position.y=1.25;g.add(ring);let core=new THREE.Mesh(new THREE.CircleGeometry(.88,32),new THREE.MeshBasicMaterial({color,transparent:true,opacity:.18,side:THREE.DoubleSide}));core.position.y=1.25;g.add(core);g.position.set(x,0,z);scene.add(g);triggers.push({x,z,r:1.25,type:'portal',id,label});return g}
-function clearWorld(){for(const o of [...solids.map(s=>s.mesh),...decor])scene.remove(o);solids=[];hazards=[];triggers=[];decor=[];scene.children.filter(o=>o.userData.temp).forEach(o=>scene.remove(o));}
-function ambient(modeColor=0x5bdfff){point.color.setHex(modeColor);point.intensity=38;let stars=new THREE.Group();for(let i=0;i<60;i++){let s=new THREE.Mesh(new THREE.SphereGeometry(.035,6,6),new THREE.MeshBasicMaterial({color:modeColor}));s.position.set((Math.random()-.5)*65,Math.random()*17+2,(Math.random()-.5)*65);stars.add(s)}scene.add(stars);decor.push(stars)}
-const modes={
- 'LOBBY':{title:'THE LOBBY',desc:'A quiet place between places. Open the chart and choose your first route.',color:0x5bdfff,build:buildLobby},
- 'Ø':{title:'THE FIRST MODE',desc:'A simple introduction. Learn the rhythm: platforms, jumps, and a door at the end.',color:0x6bdcf5,build:buildFirst,next:'<<<'},
- '<<<':{title:'INSTANT WIN MODE',desc:'The shortest route is not always the safest. Follow the glowing stepping stones.',color:0x75f0c4,build:buildInstant,next:'<<'},
- '<<':{title:'UNFAILABLE MODE',desc:'A forgiving route with broad platforms. Find the button, then the exit.',color:0x79c9ff,build:buildUnfail,next:'<'},
- '<':{title:'LOWER GAP',desc:'A narrow descent. The gaps are real; commit to each jump.',color:0xe8c879,build:buildGap,next:'>'},
- '>':{title:'AUTOMATIC',desc:'The route keeps moving. Conveyors will carry you whether you want them to or not.',color:0xf3a86b,build:buildAuto,next:'∃'},
- '∃':{title:'EFFORTLESS',desc:'A breather before the next stretch. Watch the floor, not just the destination.',color:0x80e5c0,build:buildEffort,next:'E'},
- 'E':{title:'EASY',desc:'Your first proper sublevel. A Smiler timer watches one section — keep moving.',color:0xff8aab,build:buildEasy,next:'Normal'},
- 'Normal':{title:'NORMAL',desc:'Welcome to Zone 2. Timed fire, switch gates, and a route that asks you to pay attention.',color:0xb68aff,build:buildNormal,next:'Medium'},
- 'Medium':{title:'MEDIUM',desc:'A more demanding route. Crushers cycle across the walkway; wait for the opening.',color:0xff9b68,build:buildMedium,next:'Hard'},
- 'Hard':{title:'HARD',desc:'Locked for this prototype’s next chapter.',color:0xff6380,build:()=>buildLocked('HARD')},
- 'Deep Instant Win':{title:'DEEP INSTANT WIN',desc:'A secret route hidden behind the obvious route.',color:0x9a8bff,build:buildSecret},
- 'False 1':{title:'FALSE 1',desc:'A hidden side path from Normal. Not every door leads where it claims.',color:0x9a8bff,build:buildFalse}
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x080d0b);scene.fog=new THREE.FogExp2(0x080d0b,.035);
+const camera=new THREE.PerspectiveCamera(74,innerWidth/innerHeight,.08,70);
+camera.position.set(0,1.68,5.4);
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;
+$('game').appendChild(renderer.domElement);
+
+scene.add(new THREE.HemisphereLight(0x9aa99a,0x161b18,.38));
+const moon=new THREE.DirectionalLight(0x91a9a0,.45);moon.position.set(-5,9,4);moon.castShadow=true;moon.shadow.mapSize.set(1024,1024);scene.add(moon);
+const flashlight=new THREE.SpotLight(0xd9e5cf,0,19,Math.PI/7,.45,1.4);flashlight.castShadow=true;flashlight.shadow.mapSize.set(512,512);scene.add(flashlight);scene.add(flashlight.target);
+const fill=new THREE.PointLight(0xc0a77c,.12,8);fill.position.set(0,2.4,0);scene.add(fill);
+
+const mat=(color,rough=.9,metal=0)=>new THREE.MeshStandardMaterial({color,roughness:rough,metalness:metal});
+const mats={wall:mat(0x41463e),wall2:mat(0x343a34),floor:mat(0x302d26),wood:mat(0x49382a),darkwood:mat(0x29231d),fabric:mat(0x55584e),cream:mat(0x9b927b),black:mat(0x111512),glass:new THREE.MeshStandardMaterial({color:0x182a29,roughness:.2,metalness:.2}),red:mat(0x63332c),paper:mat(0xaaa18a)};
+function box(parent,x,y,z,w,h,d,material,opts={}){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;if(opts.rot)m.rotation.y=opts.rot;parent.add(m);return m}
+function sphere(parent,x,y,z,r,material){const m=new THREE.Mesh(new THREE.SphereGeometry(r,14,10),material);m.position.set(x,y,z);m.castShadow=true;parent.add(m);return m}
+function cylinder(parent,x,y,z,rt,rb,h,material){const m=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,12),material);m.position.set(x,y,z);m.castShadow=true;parent.add(m);return m}
+const roomDefs=[
+ {name:'LIVING ROOM',cx:0,cz:0,w:8,d:7},
+ {name:'KITCHEN',cx:7,cz:0,w:6,d:7},
+ {name:'HALLWAY',cx:0,cz:-6.5,w:8,d:6},
+ {name:'BEDROOM',cx:-7,cz:-6.5,w:6,d:6},
+ {name:'BATHROOM',cx:7,cz:-6.5,w:6,d:6},
+ {name:'BASEMENT',cx:0,cz:7,w:8,d:7}
+];
+const roomMeshes={},roomObjects={},anomalyPool=[];
+function floorRoom(r){
+ box(scene,r.cx,-.12,r.cz,r.w,.24,r.d,mats.floor);
+ // Shared walls have real door openings, so the house is one connected floor plan.
+ for(const side of [-1,1]){
+  const x=r.cx+side*r.w/2, neighbor=roomDefs.find(o=>o!==r&&Math.abs((o.cx-side*o.w/2)-x)<.12&&Math.min(r.cz+r.d/2,o.cz+o.d/2)-Math.max(r.cz-r.d/2,o.cz-o.d/2)>1);
+  if(!neighbor)box(scene,x,1.55,r.cz,.18,3.1,r.d,mats.wall);
+  else {const lo=Math.max(r.cz-r.d/2,neighbor.cz-neighbor.d/2),hi=Math.min(r.cz+r.d/2,neighbor.cz+neighbor.d/2),mid=(lo+hi)/2,gap=1.55;box(scene,x,1.55,(lo+mid-gap/2)/2,.18,3.1,Math.max(.05,mid-gap/2-lo),mats.wall);box(scene,x,1.55,(mid+gap/2+hi)/2,.18,3.1,Math.max(.05,hi-mid-gap/2),mats.wall);}
+ }
+ for(const side of [-1,1]){
+  const z=r.cz+side*r.d/2, neighbor=roomDefs.find(o=>o!==r&&Math.abs((o.cz-side*o.d/2)-z)<.12&&Math.min(r.cx+r.w/2,o.cx+o.w/2)-Math.max(r.cx-r.w/2,o.cx-o.w/2)>1);
+  if(!neighbor)box(scene,r.cx,1.55,z,r.w,3.1,.18,mats.wall);
+  else {const lo=Math.max(r.cx-r.w/2,neighbor.cx-neighbor.w/2),hi=Math.min(r.cx+r.w/2,neighbor.cx+neighbor.w/2),mid=(lo+hi)/2,gap=1.65;box(scene,(lo+mid-gap/2)/2,1.55,z,Math.max(.05,mid-gap/2-lo),3.1,.18,mats.wall);box(scene,(mid+gap/2+hi)/2,1.55,z,Math.max(.05,hi-mid-gap/2),3.1,.18,mats.wall);}
+ }
+}
+roomDefs.forEach(r=>{floorRoom(r);roomObjects[r.name]=[]});
+function addObj(room,name,mesh){mesh.userData.baseName=name;mesh.userData.room=room;roomObjects[room].push(mesh);return mesh}
+function table(room,x,z){const g=new THREE.Group();g.position.set(x,0,z);box(g,0,.86,0,1.6,.13,.9,mats.wood);for(let dx of [-.68,.68])for(let dz of [-.34,.34])box(g,dx,.42,dz,.09,.84,.09,mats.darkwood);scene.add(g);return addObj(room,'table',g)}
+function lamp(room,x,z){const g=new THREE.Group();g.position.set(x,0,z);cylinder(g,0,.95,0,.04,.05,.9,mats.darkwood);cylinder(g,0,1.48,0,.35,.08,.38,mats.cream);scene.add(g);return addObj(room,'lamp',g)}
+function picture(room,x,y,z,rot=0){const g=new THREE.Group();g.position.set(x,y,z);g.rotation.y=rot;box(g,0,0,0,.92,.7,.08,mats.darkwood);box(g,0,0,.05,.78,.56,.025,mat(0x4d5a4c));box(g,-.15,-.08,.07,.23,.27,.018,mat(0x242c27));scene.add(g);return addObj(room,'picture',g)}
+function plant(room,x,z){const g=new THREE.Group();g.position.set(x,0,z);cylinder(g,0,.28,0,.24,.28,.55,mats.red);for(let i=0;i<5;i++){let a=i*Math.PI*2/5;sphere(g,Math.cos(a)*.2,.75+Math.random()*.22,Math.sin(a)*.2,.22,mat(0x344b38));}scene.add(g);return addObj(room,'plant',g)}
+function chair(room,x,z,rot=0){const g=new THREE.Group();g.position.set(x,0,z);g.rotation.y=rot;box(g,0,.55,0,.72,.13,.7,mats.fabric);box(g,0,1, -.29,.72,.85,.12,mats.fabric);for(let dx of [-.28,.28])for(let dz of [-.27,.27])box(g,dx,.27,dz,.07,.55,.07,mats.darkwood);scene.add(g);return addObj(room,'chair',g)}
+function book(room,x,y,z){const g=new THREE.Group();g.position.set(x,y,z);box(g,0,0,0,.45,.12,.32,mat(0x6b302a));box(g,0,.07,0,.43,.035,.3,mat(0x9a8b6d));scene.add(g);return addObj(room,'book',g)}
+function clock(room,x,y,z){const g=new THREE.Group();g.position.set(x,y,z);cylinder(g,0,0,0,.23,.23,.08,mats.darkwood);sphere(g,0,0,.05,.17,mats.paper);box(g,0,.04,.14,.012,.12,.015,mats.black);scene.add(g);return addObj(room,'clock',g)}
+// Living room
+table('LIVING ROOM',-.5,-.1);chair('LIVING ROOM',-2,1.1,.3);chair('LIVING ROOM',1.9,1.1,-.3);plant('LIVING ROOM',3,-2.2);picture('LIVING ROOM',-2.8,2,-3.35);lamp('LIVING ROOM',2.8,1.8);book('LIVING ROOM',-.3,1.02,-.1);clock('LIVING ROOM',1.7,1.9,-3.35);
+box(scene,0,.5,-3.37,1.8,.9,.12,mats.black);box(scene,0,1,-3.29,1.55,.68,.04,mats.glass);
+// Kitchen
+table('KITCHEN',7,0);box(scene,7,1.05,-2.65,4.9,1.1,.75,mats.wood);box(scene,7,1.65,-2.65,4.9,.12,.75,mats.cream);box(scene,9.1,.7,-2.55,.7,.7,.6,mats.black);cylinder(scene,5.8,1.75,-2.5,.18,.18,.08,mats.black);plant('KITCHEN',9.3,2.5);chair('KITCHEN',5.2,1.3,1.4);book('KITCHEN',7,1.76,0);
+// Hall
+picture('HALLWAY',-2,2,-8.95);picture('HALLWAY',2,2,-8.95);clock('HALLWAY',0,2.2,-8.95);plant('HALLWAY',3,-5.3);chair('HALLWAY',-2,-5.5,-.3);
+// Bedroom
+box(scene,-7,.48,-6.6,3.6,.5,2.4,mats.darkwood);box(scene,-7,.8,-6.6,3.5,.25,2.3,mats.fabric);box(scene,-7,.96,-6.6,3.2,.12,2,mats.cream);box(scene,-7,1.08,-7.25,1.3,.28,.5,mats.paper);lamp('BEDROOM',-9,-4.8);table('BEDROOM',-9,-7.7);picture('BEDROOM',-7,2,-8.95);plant('BEDROOM',-9.3,-4.8);book('BEDROOM',-9,1.02,-7.7);
+// Bathroom
+box(scene,7,.65,-6.7,2.5,1.3,1.4,mat(0x777c76));box(scene,7,1.35,-6.7,2.5,.1,1.4,mats.cream);cylinder(scene,8.9,.65,-8.1,.42,.42,1.1,mat(0xddd8c9));box(scene,5.2,1.2,-8.75,1.6,.9,.1,mats.glass);plant('BATHROOM',9.2,-4.8);picture('BATHROOM',7,2,-8.95);
+// Basement
+table('BASEMENT',0,7);chair('BASEMENT',-2,8.2,.3);box(scene,-2,.7,8,1.6,1.4,.6,mats.black);box(scene,-2,1.42,8,.6,.05,.3,mats.red);cylinder(scene,2,.6,8,.5,.5,1.2,mats.darkwood);picture('BASEMENT',0,2,9.9);lamp('BASEMENT',2,8.5);book('BASEMENT',0,1.02,7);
+
+const roomLights={};
+roomDefs.forEach((r,i)=>{let l=new THREE.PointLight(i===5?0x9b7c5f:0xd5c5a1,i===5?.28:.48,9);l.position.set(r.cx,2.7,r.cz);scene.add(l);roomLights[r.name]=l;box(scene,r.cx,3.04,r.cz,1.0,.08,.55,mat(0x6a695a));});
+const outside=new THREE.Mesh(new THREE.PlaneGeometry(60,60),mat(0x090f0e));outside.rotation.x=-Math.PI/2;outside.position.set(0,-.28,0);scene.add(outside);
+// Door openings are left in the connecting walls; collision is handled by room bounds with openings.
+const colliders=[];
+function wallCollider(x,z,w,d){colliders.push({x,z,w,d})}
+roomDefs.forEach(r=>{
+ // outer walls only; internal shared walls remain walkable through broad door gaps
+ const isOuter=(x,z)=>!(Math.abs(x)<4.2&&Math.abs(z)<3.7);
+});
+// Simple furniture collision boxes
+function addCollision(x,z,w,d){colliders.push({x,z,w,d})}
+addCollision(-.5,-.1,1.6,.9);addCollision(-2,1.1,.75,.75);addCollision(1.9,1.1,.75,.75);
+addCollision(7,0,1.6,.9);addCollision(7,-2.65,4.9,.75);addCollision(-7,-6.6,3.6,2.4);addCollision(7,-6.7,2.5,1.4);addCollision(0,7,1.6,.9);
+const boundary=[[-4.1,0,.18,7], [4.1,0,.18,7], [0,3.6,8,.18],[0,-3.6,8,.18],
+ [3.9,-6.5,.18,5],[10.1,-6.5,.18,5],[7,-9,.0,0]];
+// Movement through doorways between rooms via connected corridor thresholds.
+function blocked(x,z){if(x<-10.1||x>10.1||z<-9.1||z>10.1)return true;
+ for(const c of colliders){if(Math.abs(x-c.x)<c.w/2+.28&&Math.abs(z-c.z)<c.d/2+.28)return true}
+ return false;
+}
+function makeEntity(){const g=new THREE.Group();const black= new THREE.MeshStandardMaterial({color:0x020303,roughness:1});const body=new THREE.Mesh(new THREE.CapsuleGeometry(.34,.95,4,8),black);body.position.y=1.02;g.add(body);const head=new THREE.Mesh(new THREE.SphereGeometry(.29,12,10),black);head.position.y=1.8;g.add(head);const eyeMat=new THREE.MeshBasicMaterial({color:0xb8cbbd});for(let x of [-.1,.1]){const e=new THREE.Mesh(new THREE.SphereGeometry(.025,8,8),eyeMat);e.position.set(x,1.84,.25);g.add(e)}g.visible=false;scene.add(g);return g}
+const entity=makeEntity();let entityRoom='';let entityProgress=0;let entityActive=false;let entityAttackTimer=0;
+const anomalyTypes=['MOVED OBJECT','MISSING OBJECT','EXTRA OBJECT','LIGHT ANOMALY','DISTORTION','INTRUDER'];
+const roomNames=roomDefs.map(r=>r.name);
+let activeAnomalies=[],reported=0,missed=0,lives=3,nightSeconds=0,gameRunning=false,tabletOpen=false,selectedRoom='',selectedType='',lastSpawn=0,spawnEvery=38,flashOn=false,entitySeen=false;
+let yaw=0,pitch=0,keys={},lastTime=performance.now(),walkTime=0,toastTimer=0;
+const clockEl=$('time');
+function toast(msg){$('toast').textContent=msg;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),2400)}
+function roomForPosition(x,z){let best=roomDefs[0],dist=1e9;for(const r of roomDefs){let d=Math.hypot((x-r.cx)/(r.w/2),(z-r.cz)/(r.d/2));if(d<dist){dist=d;best=r}}return best.name}
+function anomalyObject(room){const arr=roomObjects[room];return arr[Math.floor(Math.random()*arr.length)]}
+function spawnAnomaly(){
+ if(activeAnomalies.length>=3)return;
+ const type=anomalyTypes[Math.floor(Math.random()*5)],room=roomNames[Math.floor(Math.random()*roomNames.length)];
+ if(activeAnomalies.some(a=>a.room===room))return;
+ let target=null,original=null,extra=null;
+ if(type==='MOVED OBJECT'){target=anomalyObject(room);original=target.position.clone();target.position.x+=Math.random()>.5?1.05:-1.05;target.position.z+=Math.random()>.5?.75:-.75}
+ if(type==='MISSING OBJECT'){target=anomalyObject(room);target.visible=false}
+ if(type==='EXTRA OBJECT'){extra=new THREE.Mesh(new THREE.SphereGeometry(.32,12,10),mat(0x777f75));const r=roomDefs.find(r=>r.name===room);extra.position.set(r.cx+(Math.random()-.5)*r.w*.55,.38,r.cz+(Math.random()-.5)*r.d*.55);scene.add(extra)}
+ if(type==='LIGHT ANOMALY'){roomLights[room].intensity=.02}
+ if(type==='DISTORTION'){target=anomalyObject(room);original=target.scale.clone();target.scale.multiply(new THREE.Vector3(1.7,.45,1.35))}
+ const a={type,room,target,original,extra,age:0};activeAnomalies.push(a);
+ if(Math.random()<.32&&!entityActive)spawnEntity(room);
+ updateStatus();
+}
+function spawnEntity(preferred){entityRoom=preferred||roomNames[Math.floor(Math.random()*roomNames.length)];const r=roomDefs.find(x=>x.name===entityRoom);entity.position.set(r.cx+(Math.random()-.5)*r.w*.6,0,r.cz+(Math.random()-.5)*r.d*.6);entity.visible=true;entityActive=true;entityProgress=0;entityAttackTimer=0;toast('MOVEMENT DETECTED — CHECK THE HOUSE');}
+function restoreAnomaly(a){if(a.target){if(a.type==='MISSING OBJECT')a.target.visible=true;else if(a.type==='MOVED OBJECT'&&a.original)a.target.position.copy(a.original);else if(a.type==='DISTORTION'&&a.original)a.target.scale.copy(a.original)}if(a.type==='LIGHT ANOMALY')roomLights[a.room].intensity=a.room==='BASEMENT'?.28:.48;if(a.extra)scene.remove(a.extra)}
+function updateStatus(){$('healthText').textContent=Array.from({length:3},(_,i)=>i<lives?'●':'○').join(' ');$('threatText').textContent='THREAT: '+(activeAnomalies.length>=3?'CRITICAL':activeAnomalies.length>=2?'ELEVATED':'LOW');$('reportCount').textContent=`REPORTS: ${reported} / ${reported+missed}`;}
+function buildTablet(){
+ $('roomGrid').innerHTML='';roomNames.forEach(n=>{let b=document.createElement('button');b.className='room-btn';b.textContent=n;b.onclick=()=>{selectedRoom=n;[...$('roomGrid').children].forEach(x=>x.classList.toggle('active',x===b));checkSelection()};$('roomGrid').appendChild(b)});
+ $('typeGrid').innerHTML='';anomalyTypes.forEach(n=>{let b=document.createElement('button');b.className='type-btn';b.textContent=n;b.onclick=()=>{selectedType=n;[...$('typeGrid').children].forEach(x=>x.classList.toggle('active',x===b));checkSelection()};$('typeGrid').appendChild(b)});
+}
+function checkSelection(){$('report').disabled=!(selectedRoom&&selectedType);$('tablet-note').textContent=selectedRoom&&selectedType?`${selectedRoom} / ${selectedType} — ready to transmit.`:'Select a room and observation class.'}
+function openTablet(){if(!gameRunning)return;tabletOpen=!tabletOpen;$('tablet').classList.toggle('open',tabletOpen);if(tabletOpen){selectedRoom='';selectedType='';[...$('roomGrid').children,...$('typeGrid').children].forEach(x=>x.classList.remove('active'));checkSelection();document.exitPointerLock?.()}else if(document.pointerLockElement!==renderer.domElement)renderer.domElement.requestPointerLock?.()}
+$('tabletBtn').onclick=openTablet;$('mobileTablet').onclick=openTablet;$('tablet-close').onclick=openTablet;
+$('report').onclick=()=>{
+ if(!selectedRoom||!selectedType)return;
+ const idx=activeAnomalies.findIndex(a=>a.room===selectedRoom&&a.type===selectedType);
+ if(idx>=0){restoreAnomaly(activeAnomalies[idx]);activeAnomalies.splice(idx,1);reported++;toast('REPORT ACCEPTED — ANOMALY CONTAINED');}
+ else{lives--;missed++;toast('FALSE REPORT — OPERATOR ERROR');$('damage').style.opacity='.8';setTimeout(()=>$('damage').style.opacity='0',350);}
+ $('tablet').classList.remove('open');tabletOpen=false;updateStatus();if(lives<=0)endGame(false);
 };
-function buildLobby(){platform(0,0,34,30,0);wall(0,-15,34,.8,5);wall(-17,0,.8,30,5);wall(17,0,.8,30,5);wall(0,15,34,.8,5);
-for(let i=0;i<9;i++){let x=-12+i*3;box(x,.05,-7,.12,.08,13,mats.trim,false)}
-for(let i=0;i<5;i++){let x=-10+i*5;box(x,1.2,5,3.5,2.4,.4,mats.wall,false);box(x,2.45,5,3.6,.12,.55,mats.trim,false)}
-portal(-10,0,'Ø','Ø');portal(-5,0,'<<<','<<<',0x7cf2c7);portal(0,0,'<<','<<',0x79c9ff);portal(5,0,'<','<',0xe8c879);portal(10,0,'>','>',0xf3a86b);portal(-7,-10,'∃','∃',0x80e5c0);portal(0,-10,'E','E',0xff8aab);portal(7,-10,'Normal','Normal',0xb68aff);
-pad(0,10);for(let i=0;i<28;i++){let a=Math.random()*Math.PI*2,r=12+Math.random()*2;let p=glow(Math.cos(a)*r,.1,Math.sin(a)*r,.06,0x64dfff);decor.push(p)}
+buildTablet();
+function toggleFlash(){flashOn=!flashOn;flashlight.intensity=flashOn?5.5:0;toast(flashOn?'FLASHLIGHT ON':'FLASHLIGHT OFF')}
+$('flashBtn').onclick=toggleFlash;
+function startGame(){ $('start').style.display='none';$('hud').style.display='block';$('crosshair').style.display='block';gameRunning=true;nightSeconds=0;lastSpawn=0;spawnEvery=33;activeAnomalies=[];reported=0;missed=0;lives=3;entityActive=false;entity.visible=false;roomDefs.forEach(r=>roomLights[r.name].intensity=r.name==='BASEMENT'?.28:.48);camera.position.set(0,1.68,5.4);yaw=Math.PI;pitch=0;updateStatus();renderer.domElement.requestPointerLock?.();toast('SHIFT STARTED. THE HOUSE IS QUIET.');}
+function endGame(win){gameRunning=false;document.exitPointerLock?.();$('hud').style.display='none';$('crosshair').style.display='none';$('end').style.display='flex';$('endKicker').textContent=win?'CONTRACT FULFILLED':'SIGNAL LOST';$('endTitle').textContent=win?'06:00 AM':'SHIFT TERMINATED';$('endText').textContent=win?`You made it through the night. ${reported} anomalies correctly contained. ${missed} false reports. The company thanks you for your service. Please do not discuss what you saw.`:`Your contract has been terminated. ${reported} reports accepted. ${missed} errors recorded. The house is still occupied.`;}
+$('startBtn').onclick=startGame;$('againBtn').onclick=()=>{$('end').style.display='none';$('start').style.display='flex'};
+addEventListener('keydown',e=>{keys[e.code]=true;if(e.code==='KeyR'&&!e.repeat)openTablet();if(e.code==='KeyF'&&!e.repeat)toggleFlash();if(e.code==='Escape'&&tabletOpen){$('tablet').classList.remove('open');tabletOpen=false}if(['Space','ArrowUp','ArrowDown'].includes(e.code))e.preventDefault()});
+addEventListener('keyup',e=>keys[e.code]=false);
+renderer.domElement.addEventListener('click',()=>{if(gameRunning&&!tabletOpen&&document.pointerLockElement!==renderer.domElement)renderer.domElement.requestPointerLock?.()});
+document.addEventListener('mousemove',e=>{if(document.pointerLockElement===renderer.domElement&&gameRunning&&!tabletOpen){yaw-=e.movementX*.0022;pitch-=e.movementY*.0018;pitch=Math.max(-1.25,Math.min(1.25,pitch))}});
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.7))});
+const clock=new THREE.Clock();
+function update(dt){
+ if(!gameRunning)return;
+ nightSeconds+=dt;
+ const hour=nightSeconds/90; // six in-game hours over nine real minutes
+ const h=Math.min(6,Math.floor(hour)),m=Math.floor((hour-h)*60);
+ clockEl.textContent=`${String((12+h)%12||12).padStart(2,'0')}:${String(m).padStart(2,'0')} ${h<6?'AM':'AM'}`;
+ if(nightSeconds>=540){endGame(true);return}
+ if(nightSeconds-lastSpawn>spawnEvery){spawnAnomaly();lastSpawn=nightSeconds;spawnEvery=Math.max(19,35-nightSeconds/45+Math.random()*8)}
+ activeAnomalies.forEach(a=>a.age+=dt);
+ if(activeAnomalies.length>=3&&Math.random()<dt*.06){lives--;missed++;updateStatus();$('damage').style.opacity='.65';setTimeout(()=>$('damage').style.opacity='0',300);if(lives<=0){endGame(false);return}}
+ const forward=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw)),right=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));
+ let move=new THREE.Vector3();if(keys.KeyW||keys.ArrowUp)move.add(forward);if(keys.KeyS||keys.ArrowDown)move.sub(forward);if(keys.KeyD||keys.ArrowRight)move.add(right);if(keys.KeyA||keys.ArrowLeft)move.sub(right);
+ const sprint=keys.ShiftLeft||keys.ShiftRight;let speed=sprint?4.4:2.55;
+ if(move.lengthSq()>0){move.normalize().multiplyScalar(speed*dt);let nx=camera.position.x+move.x,nz=camera.position.z+move.z;if(!blocked(nx,camera.position.z))camera.position.x=nx;if(!blocked(camera.position.x,nz))camera.position.z=nz;walkTime+=dt*(sprint?13:8);camera.position.y=1.68+Math.sin(walkTime)*.025}
+ camera.rotation.order='YXZ';camera.rotation.y=yaw;camera.rotation.x=pitch;
+ flashlight.position.copy(camera.position);flashlight.position.y-=.05;const dir=new THREE.Vector3(0,0,-1).applyEuler(camera.rotation);flashlight.target.position.copy(camera.position).add(dir.multiplyScalar(8));
+ // Entity stalks the player by moving between rooms, then closing distance if not seen.
+ if(entityActive){entityAttackTimer+=dt;const target=new THREE.Vector3(camera.position.x,0,camera.position.z);const toPlayer=target.clone().sub(entity.position);const dist=toPlayer.length();if(dist>2.2){toPlayer.normalize();entity.position.add(toPlayer.multiplyScalar(dt*(.35+nightSeconds/900)));}else if(entityAttackTimer>7){lives--;entityAttackTimer=0;updateStatus();$('damage').style.opacity='1';setTimeout(()=>$('damage').style.opacity='0',500);toast('SOMETHING TOUCHED YOU');if(lives<=0){endGame(false);return}}entity.lookAt(camera.position.x,1,camera.position.z);if(dist<12)entitySeen=true;}
+ // subtle ambient light pulse
+ 
 }
-function finishDoor(x,z,id){portal(x,z,'EXIT',id,0x77efbd);triggers[triggers.length-1].type='exit'}
-function buildFirst(){platform(0,0,9,9);platform(0,-7,5,3,-.1);platform(3,-12,4,3,-.25);platform(6,-17,4,3,-.4);platform(3,-22,5,4,-.4);platform(-2,-27,5,4,-.25);platform(-7,-32,7,5,0);wall(-5,-15,.5,12,2);pad(0,-1);finishDoor(-7,-32,'<<<');}
-function buildInstant(){platform(0,0,8,8);for(let i=0;i<6;i++){let x=(i%2?2.6:-2.6),z=-5-i*3.4;platform(x,z,2.8,2.8,-i*.18)}platform(0,-26,7,5,-1);pad(0,0);finishDoor(0,-26,'<<');portal(3,3,'SECRET','Deep Instant Win',0xa58cff)}
-function buildUnfail(){platform(0,0,13,12);platform(0,-10,10,6);platform(0,-17,12,6);platform(0,-24,10,6);pad(0,0);box(0,.65,-11,1.2,1.3,.3,mats.gold,false);triggers.push({x:0,z:-11,r:1.5,type:'button'});finishDoor(0,-24,'<');}
-function buildGap(){platform(0,0,8,8);platform(-3,-7,3,3);platform(2,-12,3,3);platform(-2,-17,3,3);platform(3,-22,3,3);platform(0,-28,8,6);hazard(0,-5,4,2,'pit',-.05);hazard(0,-15,4,2,'pit',-.05);pad(0,0);finishDoor(0,-28,'>');}
-function buildAuto(){platform(0,0,9,9);for(let i=0;i<4;i++){let z=-7-i*5;platform(0,z,8,4);let belt=box(0,.12,z,7,.12,2.5,new THREE.MeshStandardMaterial({color:0x4ba9b9,emissive:0x123e50}),false);hazards.push({x:0,z,w:7,d:2.5,type:'conveyor',dir:-1,mesh:belt})}platform(0,-29,9,6);pad(0,0);finishDoor(0,-29,'∃');}
-function buildEffort(){platform(0,0,11,11);platform(0,-9,7,4);platform(0,-16,11,6);platform(0,-23,7,4);platform(0,-30,11,7);pad(0,0);hazard(0,-16,5,1.2,'fire');finishDoor(0,-30,'E');}
-function buildEasy(){platform(0,0,12,10);platform(0,-9,9,4);platform(-4,-15,3,4);platform(1,-21,3,4);platform(5,-27,4,4);platform(0,-33,10,6);pad(0,0);hazard(0,-9,4,1.4,'spike');hazard(-4,-15,2.5,2,'spike');hazard(1,-21,2.5,2,'spike');triggers.push({x:5,z:-27,r:2,type:'smiler',start:false});finishDoor(0,-33,'Normal');}
-function buildNormal(){platform(0,0,12,10);platform(0,-8,9,4);platform(0,-15,10,5);platform(-5,-21,4,4);platform(0,-27,4,4);platform(5,-33,4,4);platform(0,-40,12,7);pad(0,0);hazard(0,-8,7,2,'fire');hazard(-5,-21,3,2,'spike');hazard(5,-33,3,2,'zapper');for(let i=0;i<3;i++){let gate=box(-2+i*2,.9,-15,1.2,1.8,4,i===0?mats.safe:mats.danger,true);hazards.push({x:-2+i*2,z:-15,w:1.1,d:3,type:'switch',mesh:gate,phase:i})}portal(4,2,'FALSE 1','False 1',0xa58cff);finishDoor(0,-40,'Medium');}
-function buildMedium(){platform(0,0,12,10);platform(0,-9,8,4);platform(0,-17,8,4);platform(0,-25,8,4);platform(0,-33,12,7);pad(0,0);for(let i=0;i<3;i++){let z=-9-i*8;let c=box(0,1,z,2,2,2,mats.danger,false);hazards.push({x:0,z,w:2,d:4,type:'crusher',mesh:c,phase:i*1.8})}hazard(0,-17,5,1.2,'fire');finishDoor(0,-33,'Hard');}
-function buildSecret(){platform(0,0,8,8);platform(0,-7,3,3);platform(0,-13,3,3);platform(0,-19,8,5);pad(0,0);finishDoor(0,-19,'E');}
-function buildFalse(){platform(0,0,10,10);platform(0,-9,6,4);platform(3,-15,4,4);platform(0,-21,9,6);pad(0,0);hazard(0,-9,4,1.5,'fire');finishDoor(0,-21,'Normal');}
-function buildLocked(name){platform(0,0,12,12);pad(0,0);box(0,1,-5,5,2,.5,mats.wall,true);toast(name+' is beyond this prototype.');}
-function makePlayer(){let group=new THREE.Group();let body=new THREE.Mesh(new THREE.CapsuleGeometry(.42,.65,6,10),new THREE.MeshStandardMaterial({color:0xe4f1ff,roughness:.45}));body.position.y=.85;body.castShadow=true;group.add(body);let visor=new THREE.Mesh(new THREE.SphereGeometry(.22,12,10),new THREE.MeshBasicMaterial({color:0x72eaff}));visor.scale.set(1,.35,.4);visor.position.set(0,1.08,-.37);group.add(visor);scene.add(group);return group}
-player=makePlayer();
-function loadMode(id,fromPortal=false){if(!modes[id])return;if(!unlocked.has(id)&&id!=='LOBBY'){toast('That sublevel is still locked.');return}
-activeMode=id;clearWorld();modes[id].build();ambient(modes[id].color);player.position.set(0,0,0);vel.set(0,0,0);hp=maxHp=100;checkpoint={x:0,y:0,z:0};modeTime=0;updateHUD();if(id!=='LOBBY')toast('Entered '+modes[id].title);$('chart').style.display='none';chartOpen=false}
-function updateHUD(){$('modeTitle').textContent=modes[activeMode].title;$('modeDesc').textContent=modes[activeMode].desc;$('sublevel').textContent=activeMode;$('hpText').textContent=Math.ceil(hp)+' / '+maxHp;$('health').style.width=(hp/maxHp*100)+'%';$('best').textContent=[...completed].slice(-1)[0]||'Ø'}
-let toastTimer;function toast(t){$('toast').textContent=t;$('toast').style.opacity=1;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').style.opacity=0,1900)}
-function openChart(){if(!started)return;chartOpen=!chartOpen;$('chart').style.display=chartOpen?'flex':'none';if(chartOpen)drawChart()}
-function drawChart(){const groups=[['zone1',['Ø','<<<','<<','<','>','∃','E']],['zone2',['Normal','Medium','Hard']],['secrets',['Deep Instant Win','False 1']]];for(const [el,ids] of groups){$(el).innerHTML='';ids.forEach(id=>{let unlockedNow=unlocked.has(id),done=completed.has(id),n=document.createElement('button');n.className='node'+(!unlockedNow?' locked':'')+(id===activeMode?' current':'');n.innerHTML='<span class="symbol">'+(done?'✓':unlockedNow?'↗':'🔒')+'</span><b>'+id+'</b><small>'+(modes[id]?.title||id)+'</small>';n.onclick=()=>{if(unlockedNow)loadMode(id)};$(el).appendChild(n)})}}
-function unlockNext(){let next=modes[activeMode].next;if(next){unlocked.add(next);toast('Sublevel unlocked: '+next)}completed.add(activeMode);updateHUD()}
-function respawn(){player.position.set(checkpoint.x,checkpoint.y,checkpoint.z);vel.set(0,0,0);hp=Math.max(35,hp);invuln=1.4;toast('Back to checkpoint');updateHUD()}
-function damage(n){if(invuln>0)return;hp-=n;invuln=.8;if(hp<=0)respawn();updateHUD()}
-function collides(nx,ny,nz){let r=.38,h=1.65;for(let s of solids){if(nx+r>s.x-s.w/2&&nx-r<s.x+s.w/2&&nz+r>s.z-s.d/2&&nz-r<s.z+s.d/2&&ny<s.y+s.h/2&&ny+h>s.y-s.h/2)return s}return null}
-function groundAt(x,z,feet){let best=-100;for(let s of solids){if(x+.3>s.x-s.w/2&&x-.3<s.x+s.w/2&&z+.3>s.z-s.d/2&&z-.3<s.z+s.d/2){let top=s.y+s.h/2;if(feet>=top-.22&&feet<=top+.55)best=Math.max(best,top)}}return best}
-function update(dt){if(!started||chartOpen)return;modeTime+=dt;invuln=Math.max(0,invuln-dt);
-let forward=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0)+mobile.f,side=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0)+mobile.s;let len=Math.hypot(forward,side);if(len>1){forward/=len;side/=len}
-let speed=(keys.ShiftLeft||keys.ShiftRight?9:6.5);let yaw=Math.atan2(camera.position.x-player.position.x,camera.position.z-player.position.z);let dx=(side*Math.cos(yaw)-forward*Math.sin(yaw))*speed*dt,dz=(-forward*Math.cos(yaw)-side*Math.sin(yaw))*speed*dt;
-let nx=player.position.x+dx,nz=player.position.z+dz;if(!collides(nx,player.position.y,nz))player.position.set(nx,player.position.y,nz);else if(!collides(nx,player.position.y,player.position.z))player.position.x=nx;else if(!collides(player.position.x,player.position.y,nz))player.position.z=nz;
-vel.y-=20*dt;if(keys.Space&&onGround){vel.y=8.3;onGround=false;keys.Space=false}let ny=player.position.y+vel.y*dt;let floor=groundAt(player.position.x,player.position.z,player.position.y+vel.y*dt);if(floor>-50&&ny<=floor){ny=floor;vel.y=0;onGround=true}else onGround=false;player.position.y=ny;
-if(player.position.y<-13){damage(15);respawn()}
-player.rotation.y=Math.atan2(dx,dz)||player.rotation.y;
-for(let h of hazards){let near=Math.abs(player.position.x-h.x)<h.w/2+.28&&Math.abs(player.position.z-h.z)<h.d/2+.28&&player.position.y<1.6;
-if(h.type==='fire'){let active=(Math.floor(modeTime*1.7+h.phase)%3)!==0;h.mesh.material=active?mats.danger:mats.safe;if(near&&active)damage(12*dt)}
-if(h.type==='spike'||h.type==='zapper'){if(near)damage(h.type==='zapper'?22:18)}
-if(h.type==='pit'&&near){damage(30);respawn()}
-if(h.type==='conveyor'&&near)player.position.z+=h.dir*3.2*dt;
-if(h.type==='switch'){let open=(Math.floor(modeTime*1.1+h.phase)%3)===0;h.mesh.material=open?mats.safe:mats.danger;h.mesh.visible=!open;if(!open&&near)damage(9*dt)}
-if(h.type==='crusher'){let cycle=(modeTime+h.phase)%4;h.mesh.position.y=cycle<1.1?1.1+Math.sin(cycle*Math.PI/1.1)*2.5:cycle<2?1.1:1.1+(cycle-2)*.1;if(near&&cycle<1.4)damage(30*dt)}
-}
-for(let t of triggers){let d=Math.hypot(player.position.x-t.x,player.position.z-t.z);if(d<t.r&&Math.abs(player.position.y)<2){
-if(t.type==='checkpoint'){checkpoint={x:t.x,y:0,z:t.z};lastSafe=modeTime}
-if(t.type==='portal'){if(t.id==='Deep Instant Win'){unlocked.add(t.id)}if(t.id==='False 1'){unlocked.add(t.id)}if(unlocked.has(t.id))loadMode(t.id)}
-if(t.type==='exit'){unlockNext();if(t.id)loadMode(t.id)}
-if(t.type==='button'&&!t.used){t.used=true;toast('Button pressed — door unlocked');let ex=triggers.find(a=>a.type==='exit');if(ex)unlocked.add(ex.id)}
-if(t.type==='smiler'&&!t.started){t.started=true;t.deadline=modeTime+8;toast('Something noticed you. MOVE.')}
-if(t.type==='smiler'&&t.deadline&&modeTime>t.deadline){damage(25);t.deadline=modeTime+8;toast('The Smiler caught up.')}
-}}
-let target=new THREE.Vector3(player.position.x,player.position.y+1.1,player.position.z);let desired=new THREE.Vector3(player.position.x+Math.sin(yaw)*7,player.position.y+4.2,player.position.z+Math.cos(yaw)*7);camera.position.lerp(desired,1-Math.pow(.001,dt));camera.lookAt(target);
-if(invuln>0)player.children[0].material.color.setHex(Math.sin(performance.now()*.03)>0?0xff9ab9:0xe4f1ff);else player.children[0].material.color.setHex(0xe4f1ff);
-}
-let prev=performance.now();function loop(now){let dt=Math.min((now-prev)/1000,.04);prev=now;update(dt);renderer.render(scene,camera);requestAnimationFrame(loop)}requestAnimationFrame(loop);
-function keydown(e){keys[e.code]=true;if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();if(e.code==='KeyC'&&!e.repeat)openChart()}function keyup(e){keys[e.code]=false}
-addEventListener('keydown',keydown);addEventListener('keyup',keyup);
-$('play').onclick=()=>{$('startScreen').style.display='none';started=true;loadMode('LOBBY')};$('closeChart').onclick=()=>{chartOpen=false;$('chart').style.display='none'};
-$('ml').ontouchstart=()=>mobile.s=-1;$('ml').ontouchend=()=>mobile.s=0;$('mr').ontouchstart=()=>mobile.s=1;$('mr').ontouchend=()=>mobile.s=0;$('mf').ontouchstart=()=>mobile.f=1;$('mf').ontouchend=()=>mobile.f=0;$('mj').ontouchstart=()=>keys.Space=true;$('mj').ontouchend=()=>keys.Space=false;
-addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
-loadMode('LOBBY');
+function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.05);update(dt);renderer.render(scene,camera)}
+animate();
 </script>
 </body></html>
