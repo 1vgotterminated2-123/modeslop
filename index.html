@@ -116,7 +116,19 @@ h1 em{font-style:normal;color:#91b59a}
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 
 const $=id=>document.getElementById(id);
-const scene=new THREE.Scene();scene.background=new THREE.Color(0x080d0b);scene.fog=new THREE.FogExp2(activeConfig.fog,.058);
+
+// Define the selected contract before building the scene: these values are
+// used immediately by the lights, fog and materials below.
+const mapConfig={
+ harrow:{title:'HARROW HOUSE',contract:'CONTRACT 014 — HARROW HOUSE',fog:0x080d0b,ambient:0x39453b,wall:0x454a43,floor:0x3b342b,light:0xd5c5a1},
+ motel:{title:'MORROW MOTEL',contract:'CONTRACT 022 — MORROW MOTEL',fog:0x090b16,ambient:0x34384b,wall:0x41414c,floor:0x35313a,light:0xa8a9cf},
+ ward:{title:'SAINT AGNES WARD',contract:'CONTRACT 031 — SAINT AGNES WARD',fog:0x091111,ambient:0x394847,wall:0x505a57,floor:0x424a48,light:0xb6d0ce}
+};
+let chosenMap='harrow';
+let chosenDifficulty='standard';
+let activeConfig=mapConfig[chosenMap];
+
+const scene=new THREE.Scene();scene.background=new THREE.Color(activeConfig.fog);scene.fog=new THREE.FogExp2(activeConfig.fog,.058);
 const camera=new THREE.PerspectiveCamera(74,innerWidth/innerHeight,.08,70);
 camera.position.set(0,1.68,5.4);
 const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
@@ -300,12 +312,13 @@ buildTablet();
 function toggleFlash(){audioReady();flashOn=!flashOn;flashlight.intensity=flashOn?3.8:0;toast(flashOn?'FLASHLIGHT ON':'FLASHLIGHT OFF')}
 $('flashBtn').onclick=toggleFlash;
 let audioCtx=null,heartbeatTimer=0;
-function audioReady(){if(!audioCtx){audioCtx=new (window.AudioContext||window.webkitAudioContext)();}if(audioCtx.state==='suspended')audioCtx.resume();}
+function audioReady(){const AudioContextClass=window.AudioContext||window.webkitAudioContext;if(!AudioContextClass)return;if(!audioCtx)audioCtx=new AudioContextClass();if(audioCtx.state==='suspended')audioCtx.resume().catch(()=>{});}
 function tone(freq,dur,gain=.04,type='sine'){if(!audioCtx)return;const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(gain,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+dur);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+dur)}
 function playScare(){audioReady();tone(48,1.1,.22,'sawtooth');setTimeout(()=>tone(39,.8,.2,'square'),90);setTimeout(()=>tone(900,.22,.09,'sawtooth'),120)}
 function ambience(dt){if(!audioCtx)return;heartbeatTimer+=dt;const near=entityActive?Math.max(0,1-camera.position.distanceTo(entity.position)/13):0;if(heartbeatTimer>(near>.35?1.05:3.6)){heartbeatTimer=0;if(near>.15){tone(54,.18,.025+near*.035,'sine');setTimeout(()=>tone(48,.16,.02+near*.03,'sine'),190)}}}
 function startGame(){
- audioReady();chosenMap=$('mapSelect').value;chosenDifficulty=$('difficultySelect').value;activeConfig=mapConfig[chosenMap];
+ try{audioReady()}catch(err){console.warn('Audio unavailable; continuing without sound.',err)}
+ chosenMap=$('mapSelect').value;chosenDifficulty=$('difficultySelect').value;activeConfig=mapConfig[chosenMap]||mapConfig.harrow;
  scene.background.setHex(activeConfig.fog);scene.fog.color.setHex(activeConfig.fog);scene.fog.density=chosenMap==='motel'?.064:chosenMap==='ward'?.055:.058;
  mats.wall.color.setHex(activeConfig.wall);mats.floor.color.setHex(activeConfig.floor);
  scene.traverse(o=>{if(o.isMesh&&o.material&&o.material.color&&o.userData.room===undefined&&o.geometry?.type==='BoxGeometry')o.material.needsUpdate=true});
