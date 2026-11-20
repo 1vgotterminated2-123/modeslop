@@ -3,189 +3,230 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>6:06 — The Sublevels</title>
+<title>PM 6:06</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Share+Tech+Mono&display=swap');
-:root{--acid:#d8ff52;--red:#ff4058;--ink:#07090b;--panel:rgba(8,12,14,.91)}
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#050708;color:#e9eee9;font-family:'Space Mono',monospace}
-canvas{display:block}#game{position:fixed;inset:0}
-#grain{position:fixed;inset:0;pointer-events:none;opacity:.11;z-index:3;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E")}
-#vignette{position:fixed;inset:0;pointer-events:none;z-index:2;background:radial-gradient(ellipse at center,transparent 35%,rgba(0,0,0,.8) 100%)}
-#hud{position:fixed;inset:0;z-index:4;pointer-events:none;display:none}
-.hudtop{position:absolute;top:22px;left:25px;right:25px;display:flex;justify-content:space-between;align-items:flex-start;text-shadow:0 2px 8px #000}
-.hudtag{font-size:11px;letter-spacing:2px;color:#b9c1b8}.hudtag strong{display:block;color:var(--acid);font-size:17px;margin-top:5px}
-#objective{position:absolute;top:88px;left:50%;transform:translateX(-50%);font-size:11px;letter-spacing:2px;color:#d9e0d8;text-align:center;white-space:nowrap}
-#crosshair{position:absolute;left:50%;top:50%;width:7px;height:7px;border:1px solid rgba(240,255,220,.8);border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 8px #d8ff52}
-#prompt{position:absolute;left:50%;top:58%;transform:translateX(-50%);font-size:10px;letter-spacing:2px;color:var(--acid);text-shadow:0 2px 5px #000}
-#bottomleft{position:absolute;left:25px;bottom:24px;width:190px}
-.statlabel{font-size:9px;letter-spacing:2px;color:#9ba59b;margin:9px 0 5px}.bar{height:5px;background:#202724;border:1px solid #414b43}.fill{height:100%;width:100%;background:var(--acid);transition:width .15s}
-#healthfill{background:#ff5263}#stamfill{background:#d8ff52}
-#bottomright{position:absolute;right:25px;bottom:24px;text-align:right;font-size:10px;line-height:2;color:#b3bdb4}
-#toast{position:absolute;left:50%;bottom:16%;transform:translateX(-50%);font-size:11px;letter-spacing:2px;color:var(--acid);opacity:0;transition:opacity .25s;text-shadow:0 2px 8px #000}
-#overlay{position:fixed;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 40%,rgba(30,48,37,.25),rgba(0,0,0,.96) 72%)}
-.panel{width:min(780px,92vw);max-height:90vh;overflow:auto;border:1px solid #39443b;background:var(--panel);box-shadow:0 20px 100px #000;padding:clamp(22px,4vw,44px);position:relative}
-.panel:before{content:"";position:absolute;top:0;left:0;width:100%;height:3px;background:var(--acid)}
-.eyebrow{font-size:10px;letter-spacing:4px;color:var(--acid);margin-bottom:18px}
-h1{font-family:'Share Tech Mono',monospace;font-weight:400;font-size:clamp(52px,10vw,92px);line-height:.86;letter-spacing:-5px;margin:0 0 18px;color:#f0f5ec;text-shadow:0 0 30px rgba(216,255,82,.12)}
-h1 span{color:var(--acid)}.subtitle{color:#a9b3a9;font-size:11px;line-height:1.8;max-width:550px}
-.rule{height:1px;background:#303a32;margin:25px 0}
-.sectionhead{font-size:10px;letter-spacing:3px;color:#89958b;margin-bottom:12px}
-.modes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.mode{background:#101714;border:1px solid #303a32;color:#cbd4c9;padding:13px 12px;text-align:left;cursor:pointer;font:inherit;transition:.15s}
-.mode:hover,.mode.selected{border-color:var(--acid);background:#1a2418;color:#efffce}
-.mode b{display:block;font-size:11px;letter-spacing:1px}.mode small{display:block;color:#879287;font-size:9px;margin-top:6px;line-height:1.5}
-.actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:24px}
-button.primary{background:var(--acid);border:0;color:#10150c;padding:15px 26px;font:700 11px 'Space Mono';letter-spacing:2px;cursor:pointer}
-button.primary:hover{background:#efffa8;transform:translateY(-1px)}
-.hint{font-size:9px;color:#7f8a80;line-height:1.8}
-#pause{display:none;position:fixed;inset:0;z-index:9;background:rgba(0,0,0,.78);align-items:center;justify-content:center;text-align:center}
-#pause .panel{width:min(440px,90vw)}
-#end{display:none;position:fixed;inset:0;z-index:11;background:rgba(0,0,0,.88);align-items:center;justify-content:center;text-align:center}
-#end h2{font:40px 'Share Tech Mono';margin:0 0 10px}
-#end p{font-size:11px;color:#aab4aa;line-height:1.9}
-#levelstamp{position:fixed;right:25px;top:22px;z-index:5;font-size:9px;letter-spacing:2px;color:#879187;pointer-events:none}
-@media(max-width:600px){.modes{grid-template-columns:repeat(2,1fr)}.hudtop{left:14px;right:14px;top:14px}#bottomleft{left:14px;bottom:14px}#bottomright{right:14px;bottom:14px}.panel{padding:22px}h1{letter-spacing:-3px}}
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;600;700;800;900&display=swap');
+  :root{--ink:#eef0f4;--muted:#9ba3b2;--red:#f15b54;--panel:rgba(10,13,20,.82)}
+  *{box-sizing:border-box} html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#080b12;color:var(--ink);font-family:Inter,system-ui,sans-serif}
+  canvas{display:block}
+  #vignette{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 35%,rgba(0,0,0,.55) 100%);z-index:2}
+  #hud{position:fixed;inset:0;z-index:3;pointer-events:none}
+  .top{position:absolute;top:22px;left:24px;display:flex;align-items:center;gap:12px}
+  .mark{width:34px;height:34px;border:1px solid rgba(255,255,255,.25);display:grid;place-items:center;font:500 12px 'DM Mono';color:var(--red);background:rgba(0,0,0,.25)}
+  .brand{font-size:12px;font-weight:800;letter-spacing:.2em}.brand small{display:block;color:#8992a2;font:10px 'DM Mono';letter-spacing:.12em;margin-top:4px}
+  .clock{position:absolute;top:23px;right:25px;text-align:right;font:500 13px 'DM Mono';letter-spacing:.08em}
+  .clock strong{display:block;font:800 25px Inter;letter-spacing:.04em;margin-bottom:4px}
+  .objective{position:absolute;left:25px;bottom:26px;max-width:270px}
+  .eyebrow{font:11px 'DM Mono';color:var(--red);letter-spacing:.16em;margin-bottom:8px}
+  .objective strong{font-size:14px;font-weight:700}.objective p{font-size:12px;color:#a4adbb;line-height:1.5;margin:7px 0 0}
+  .prompt{position:absolute;left:50%;bottom:14%;transform:translateX(-50%);padding:10px 15px;background:rgba(7,10,15,.82);border:1px solid rgba(255,255,255,.16);font:12px 'DM Mono';opacity:0;transition:opacity .2s;white-space:nowrap}
+  .prompt.show{opacity:1}.key{display:inline-grid;place-items:center;min-width:22px;height:22px;border:1px solid #707987;border-radius:3px;margin-right:8px;color:#fff}
+  #crosshair{position:absolute;left:50%;top:50%;width:5px;height:5px;border-radius:50%;background:#fff;box-shadow:0 0 8px #fff;opacity:.75}
+  #toast{position:absolute;top:19%;left:50%;transform:translateX(-50%);font:12px 'DM Mono';letter-spacing:.1em;color:#e6e9ef;background:rgba(0,0,0,.55);padding:10px 15px;opacity:0;transition:opacity .3s}
+  #toast.show{opacity:1}
+  #start{position:fixed;inset:0;z-index:10;display:grid;place-items:center;background:linear-gradient(110deg,rgba(4,7,12,.96),rgba(7,10,17,.78)),radial-gradient(circle at 70% 50%,#29303a,transparent 55%)}
+  .intro{width:min(560px,calc(100% - 42px));padding:36px 38px;border:1px solid rgba(255,255,255,.13);background:rgba(7,10,16,.72);box-shadow:0 25px 100px #0008}
+  .tag{font:11px 'DM Mono';color:var(--red);letter-spacing:.22em}
+  h1{font-size:clamp(54px,10vw,88px);line-height:.92;letter-spacing:-.08em;margin:20px 0 12px;font-weight:900}
+  h1 span{color:var(--red)}
+  .subtitle{font-size:14px;color:#aeb6c3;line-height:1.65;max-width:420px}
+  .rule{height:1px;background:rgba(255,255,255,.12);margin:25px 0}
+  .controls{display:grid;grid-template-columns:1fr 1fr;gap:12px 20px;color:#aeb6c3;font:11px 'DM Mono'}
+  .controls b{color:#fff;font-weight:500}
+  button{margin-top:28px;width:100%;border:0;background:#e9edf2;color:#10141c;padding:15px 18px;font-weight:900;letter-spacing:.14em;font-size:11px;cursor:pointer;transition:.2s}
+  button:hover{background:var(--red);color:white}
+  .foot{font:10px 'DM Mono';color:#677180;margin-top:15px;text-align:center;letter-spacing:.1em}
+  #ending{position:fixed;inset:0;z-index:9;display:none;place-items:center;background:rgba(3,5,9,.94);text-align:center;padding:25px}
+  #ending .box{max-width:500px}.ending-title{font-size:clamp(40px,8vw,68px);font-weight:900;letter-spacing:-.07em;margin:15px 0}
+  #ending p{color:#aeb6c3;line-height:1.7;font-size:14px}
+  @media(max-width:600px){.top{top:14px;left:14px}.clock{top:15px;right:14px}.objective{left:15px;bottom:16px}.intro{padding:27px 23px}.controls{gap:10px}}
 </style>
 </head>
 <body>
-<div id="game"></div><div id="grain"></div><div id="vignette"></div>
+<div id="vignette"></div>
 <div id="hud">
- <div class="hudtop"><div class="hudtag">SUBLEVEL<strong id="hudlevel">01 — THE ENTRY</strong></div><div class="hudtag" style="text-align:right">CURRENT MODE<strong id="hudmode">NORMAL</strong></div></div>
- <div id="objective">FIND THE EXIT // 0 / 3 POWER CELLS</div><div id="crosshair"></div><div id="prompt"></div>
- <div id="bottomleft"><div class="statlabel">VITALS</div><div class="bar"><div class="fill" id="healthfill"></div></div><div class="statlabel">STAMINA</div><div class="bar"><div class="fill" id="stamfill"></div></div></div>
- <div id="bottomright">WASD — MOVE<br>SHIFT — SPRINT<br>F — FLASHLIGHT<br>ESC — PAUSE</div><div id="toast"></div>
+  <div class="top"><div class="mark">06</div><div class="brand">PM 6:06<small>AN ORDINARY EVENING</small></div></div>
+  <div class="clock"><strong>6:06 <span style="color:var(--red)">PM</span></strong><span id="date">FRIDAY · OCTOBER 24</span></div>
+  <div class="objective"><div class="eyebrow">YOUR OBJECTIVE</div><strong id="objectiveText">Find the source of the ringing.</strong><p id="objectiveHint">The phone is somewhere in the house. It won't stop.</p></div>
+  <div id="crosshair"></div><div class="prompt" id="prompt"><span class="key">E</span><span id="promptText">INTERACT</span></div><div id="toast"></div>
 </div>
-<div id="overlay"><div class="panel">
- <div class="eyebrow">AN UNOFFICIAL SUBLEVEL EXPERIENCE</div>
- <h1>6:06<span>.</span><br>AFTERHOURS</h1>
- <div class="subtitle">You were not supposed to be here. The corridors keep changing, the lights are getting weaker, and something has learned the sound of your footsteps.<br><br><span style="color:#e1e8df">THREE CELLS. ONE EXIT. DON'T LOOK BACK.</span></div>
- <div class="rule"></div><div class="sectionhead">SELECT A MODE</div>
- <div class="modes" id="modes">
-  <button class="mode selected" data-mode="NORMAL"><b>01 / NORMAL</b><small>A quiet introduction. Probably.</small></button>
-  <button class="mode" data-mode="HARD"><b>02 / HARD</b><small>Faster threat. Less room to breathe.</small></button>
-  <button class="mode" data-mode="EXTREME"><b>03 / EXTREME</b><small>Longer maze. Unforgiving pursuit.</small></button>
-  <button class="mode" data-mode="NIGHTMARE"><b>04 / NIGHTMARE</b><small>Darkness. The lights won't save you.</small></button>
-  <button class="mode" data-mode="INSANE"><b>05 / INSANE</b><small>It knows where you are.</small></button>
-  <button class="mode" data-mode="???"><b>06 / ???</b><small>There is no description.</small></button>
- </div>
- <div class="actions"><button class="primary" id="start">ENTER SUBLEVEL →</button><div class="hint">HEADPHONES RECOMMENDED<br>WASD · MOUSE · SHIFT · F · ESC</div></div>
-</div></div>
-<div id="pause"><div class="panel"><div class="eyebrow">CONNECTION INTERRUPTED</div><h1 style="font-size:54px;letter-spacing:-2px">PAUSED<span>.</span></h1><p class="subtitle">The hallway is still there. It is waiting.</p><div class="actions" style="justify-content:center"><button class="primary" id="resume">RETURN</button><button class="mode" id="restart">RESTART LEVEL</button><button class="mode" id="menu">MAIN MENU</button></div></div></div>
-<div id="end"><div class="panel"><div class="eyebrow" id="endeyebrow">SIGNAL LOST</div><h2 id="endtitle">YOU WERE FOUND.</h2><p id="endtext">The sublevel has claimed another visitor.</p><button class="primary" id="again">TRY AGAIN →</button></div></div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script>
-(()=>{
-'use strict';
-const $=id=>document.getElementById(id);
-const MODES={
- NORMAL:{size:13,speed:2.0,damage:18,vision:13,cell:3,light:0.85},
- HARD:{size:15,speed:2.65,damage:25,vision:15,cell:3,light:0.72},
- EXTREME:{size:17,speed:3.0,damage:34,vision:17,cell:4,light:0.62},
- NIGHTMARE:{size:17,speed:3.25,damage:38,vision:19,cell:4,light:0.35},
- INSANE:{size:19,speed:3.65,damage:45,vision:22,cell:4,light:0.28},
- '???':{size:21,speed:4.0,damage:55,vision:26,cell:5,light:0.19}
-};
-let selected='NORMAL',scene,camera,renderer,clock,world=[],walls=[],cells=[],enemy,exitObj,player={x:0,z:0,yaw:0,pitch:0,hp:100,stamina:100},keys={},running=false,paused=false,locked=false,flashOn=true,cellCount=0,level=1,lastDamage=0,toastTimer=0,maze=[],N=13,cellSize=4,enemyPathTimer=0,exitUnlocked=false,walkTime=0;
-const root=$('game');
-function init3D(){
- scene=new THREE.Scene();scene.background=new THREE.Color(0x080c0b);scene.fog=new THREE.FogExp2(0x080c0b,.035);
- camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,.08,100);camera.position.set(0,1.65,0);
- renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputEncoding=THREE.sRGBEncoding;root.appendChild(renderer.domElement);
- scene.add(new THREE.HemisphereLight(0x9db8a0,0x171b17,.22));
- const ambient=new THREE.AmbientLight(0x9bb99c,.12);scene.add(ambient);
- const flashlight=new THREE.SpotLight(0xe4f5d8,2.2,23,Math.PI/5,.45,1.2);flashlight.position.set(0,0,0);flashlight.target.position.set(0,0,-1);camera.add(flashlight);camera.add(flashlight.target);camera.add(new THREE.PointLight(0x9dff79,.3,5));camera.userData.flash=flashlight;
- scene.add(camera);clock=new THREE.Clock();
+<div id="start">
+  <div class="intro">
+    <div class="tag">A SMALL 3D HORROR EXPERIENCE</div>
+    <h1>PM <span>6:06</span></h1>
+    <div class="subtitle">It's 6:06 PM. You were only supposed to be gone for a minute. The house feels different now — and something keeps calling.</div>
+    <div class="rule"></div>
+    <div class="controls">
+      <div><b>W A S D</b> &nbsp; Move</div><div><b>MOUSE</b> &nbsp; Look around</div>
+      <div><b>SHIFT</b> &nbsp; Run</div><div><b>E</b> &nbsp; Interact</div>
+      <div><b>F</b> &nbsp; Flashlight</div><div><b>ESC</b> &nbsp; Pause / unlock</div>
+    </div>
+    <button id="play">ENTER THE HOUSE</button>
+    <div class="foot">HEADPHONES RECOMMENDED · KEEP THE LIGHTS ON</div>
+  </div>
+</div>
+<div id="ending"><div class="box"><div class="tag">CONNECTION LOST</div><div class="ending-title">IT'S STILL<br><span style="color:var(--red)">6:06.</span></div><p>The ringing stops. For a moment, everything is quiet.<br>Then the phone rings again — from right behind you.</p><button id="again">PLAY AGAIN</button></div></div>
+
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x090d14);
+scene.fog = new THREE.FogExp2(0x090d14, 0.035);
+const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, .1, 100);
+camera.position.set(0,1.65,4.8);
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight); renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.05;
+document.body.appendChild(renderer.domElement);
+
+scene.add(new THREE.HemisphereLight(0x8798b7,0x17100d,.32));
+const moon = new THREE.DirectionalLight(0x8ea9d4,.42); moon.position.set(-5,8,4); moon.castShadow=true; scene.add(moon);
+const lamp = new THREE.PointLight(0xffc17b,1.1,8); lamp.position.set(-2,2.65,-2); scene.add(lamp);
+const flashlight = new THREE.SpotLight(0xdce8ff,2.2,18,Math.PI/7,.45,1.2);
+camera.add(flashlight); flashlight.position.set(0,0,0); flashlight.target.position.set(0,0,-1); camera.add(flashlight.target); scene.add(camera);
+let lightOn=true; flashlight.visible=true;
+
+const mat=(color,roughness=.9,metalness=0)=>new THREE.MeshStandardMaterial({color,roughness,metalness});
+const floorMat=mat(0x39342f), wallMat=mat(0x77716a), darkMat=mat(0x24272b), wood=mat(0x4b3021), trim=mat(0x211c19), rugMat=mat(0x473638);
+function cube(name,x,y,z,sx,sy,sz,material,cast=true){
+ const m=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),material);m.name=name;m.position.set(x,y,z);m.castShadow=cast;m.receiveShadow=true;scene.add(m);return m;
 }
-function mat(color,rough=.9,emissive=0x000000,ei=0){return new THREE.MeshStandardMaterial({color,roughness:rough,emissive,emissiveIntensity:ei})}
-function box(w,h,d,material,x,y,z,cast=true){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);m.position.set(x,y,z);m.castShadow=cast;m.receiveShadow=true;scene.add(m);world.push(m);return m}
-function clearWorld(){for(const o of [...world,...walls,...cells,enemy,exitObj].filter(Boolean)){scene.remove(o);if(o.geometry)o.geometry.dispose()}world=[];walls=[];cells=[];enemy=null;exitObj=null}
-function generateMaze(n){
- N=n;maze=Array.from({length:n},()=>Array(n).fill(1));
- function carve(x,y){maze[y][x]=0;let dirs=[[0,-2],[2,0],[0,2],[-2,0]].sort(()=>Math.random()-.5);for(const [dx,dy] of dirs){let nx=x+dx,ny=y+dy;if(nx>0&&ny>0&&nx<n-1&&ny<n-1&&maze[ny][nx]===1){maze[y+dy/2][x+dx/2]=0;carve(nx,ny)}}}
- carve(1,1);maze[1][1]=0;maze[n-2][n-2]=0;
- // Add loops so routes feel less like a single corridor.
- for(let i=0;i<Math.floor(n*n*.09);i++){let x=1+Math.floor(Math.random()*(n-2)),y=1+Math.floor(Math.random()*(n-2));if(Math.random()<.55)maze[y][x]=0}
- return maze;
+// Main room: open-front cutaway house
+cube('floor',0,-.12,0,12,.24,12,floorMat);
+cube('back wall',0,2,-6,12,4,.22,wallMat);
+cube('left wall',-6,2,0,.22,4,12,wallMat);
+cube('right wall',6,2,0,.22,4,12,wallMat);
+cube('ceiling',0,4.1,0,12,.2,12,darkMat,false);
+for(let x=-5.5;x<=5.5;x+=1) cube('floorboard',x,.008,0,.025,.012,11.7,wood,false);
+for(let z=-5.5;z<=5.5;z+=1) cube('floorboard2',0,.009,z,11.7,.012,.025,wood,false);
+// hallway opening and interior partition
+cube('partition',0,2,-1.7,5.8,4,.18,wallMat);
+cube('door opening lintel',0,3.55,-1.68,1.7,.9,.2,trim);
+cube('door frame left',-.85,1.7,-1.68,.12,3.4,.2,trim);
+cube('door frame right',.85,1.7,-1.68,.12,3.4,.2,trim);
+cube('hall floor',0,-.05,-3.8,3, .12,4.5,wood);
+cube('hall left',-1.55,2,-4, .12,4,4.2,wallMat);
+cube('hall right',1.55,2,-4, .12,4,4.2,wallMat);
+// windows
+for(const x of [-4.3,4.3]){
+ cube('window dark',x,2.55,-5.86,1.55,1.35,.035,mat(0x101d2b,.3));
+ cube('window vertical',x,2.55,-5.8,.06,1.5,.1,trim);
+ cube('window horizontal',x,2.55,-5.8,1.65,.06,.1,trim);
 }
-function worldPos(x,z){return {x:(x-(N-1)/2)*cellSize,z:(z-(N-1)/2)*cellSize}}
-function openCells(){let a=[];for(let y=1;y<N-1;y++)for(let x=1;x<N-1;x++)if(!maze[y][x])a.push({x,y});return a}
-function buildLevel(){
- clearWorld();const cfg=MODES[selected];cellCount=0;exitUnlocked=false;player.hp=100;player.stamina=100;player.x=worldPos(1,1).x;player.z=worldPos(1,1).z;player.yaw=0;player.pitch=0;camera.position.set(player.x,1.65,player.z);
- generateMaze(cfg.size+(level>1?Math.min(4,level-1):0));cellSize=4;
- const palette=selected==='NIGHTMARE'||selected==='???'?{wall:0x20252b,floor:0x151a20,ceiling:0x10151b,glow:0x8d2536}:{wall:0x657b5b,floor:0x343c32,ceiling:0x20271f,glow:0x8dbb63};
- const wm=mat(palette.wall),fm=mat(palette.floor),cm=mat(palette.ceiling),trim=mat(0x263329,.8,palette.glow,.22);
- box(N*cellSize,.3,N*cellSize,fm,0,-.18,0,false);
- box(N*cellSize,.25,N*cellSize,cm,0,3.35,0,false);
- for(let y=0;y<N;y++)for(let x=0;x<N;x++){let p=worldPos(x,y);if(maze[y][x]){let w=box(cellSize,3.5,cellSize,wm,p.x,1.57,p.z);walls.push(w)}else{
-  // Scattered overhead fixtures and wall markings make corridors readable.
-  if((x*7+y*11)%13===0){let lamp=new THREE.PointLight(palette.glow,selected==='???'?.18:.38,7);lamp.position.set(p.x,3.05,p.z);scene.add(lamp);world.push(lamp);box(.75,.08,.3,trim,p.x,3.12,p.z,false)}
- }}
- // Exit at the far corner.
- let ep=worldPos(N-2,N-2);exitObj=new THREE.Group();exitObj.position.set(ep.x,0,ep.z);scene.add(exitObj);
- const gate=new THREE.Mesh(new THREE.BoxGeometry(2.1,2.8,.22),mat(0x25382b,.5,0x7dff8c,.4));gate.position.y=1.35;exitObj.add(gate);
- const frame=mat(0x91b987,.5,0x66ff83,.7);for(let x of [-1.15,1.15]){let q=new THREE.Mesh(new THREE.BoxGeometry(.14,3,.18),frame);q.position.set(x,1.5,0);exitObj.add(q)}
- let epLight=new THREE.PointLight(0x66ff8c,exitUnlocked?1:.25,8);epLight.position.set(0,2,0);exitObj.add(epLight);
- // Cells are placed in reachable dead-ish ends, away from spawn and exit.
- let available=openCells().filter(p=>Math.abs(p.x-1)+Math.abs(p.y-1)>5&&Math.abs(p.x-(N-2))+Math.abs(p.y-(N-2))>3).sort(()=>Math.random()-.5);
- for(let i=0;i<cfg.cell;i++){let p=worldPos(available[i].x,available[i].y);let g=new THREE.Group();g.position.set(p.x,.65,p.z);let core=new THREE.Mesh(new THREE.OctahedronGeometry(.28),mat(0xd8ff52,.3,0xb4ff36,1.4));g.add(core);let halo=new THREE.PointLight(0xc9ff54,.65,4);g.add(halo);scene.add(g);cells.push(g)}
- spawnEnemy(cfg);
- // Decorative warning signs on some walls.
- for(let i=0;i<Math.floor(N*.45);i++){let x=1+Math.floor(Math.random()*(N-2)),y=1+Math.floor(Math.random()*(N-2));if(maze[y][x]){let p=worldPos(x,y);let sign=box(1.1,.65,.035,mat(0x252c25,.7,0x93b75b,.22),p.x,1.9,p.z,false);sign.rotation.y=Math.random()*Math.PI*2;}}
- $('hudlevel').textContent=String(level).padStart(2,'0')+' — '+(level===1?'THE ENTRY':level===2?'THE RETURN':'THE DEEPER');
- $('hudmode').textContent=selected;$('objective').textContent=`FIND ${cfg.cell} POWER CELLS // 0 / ${cfg.cell}`;
-}
-function spawnEnemy(cfg){
- const candidates=openCells().filter(p=>Math.abs(p.x-1)+Math.abs(p.y-1)>Math.floor(N*.55));let p=candidates[Math.floor(Math.random()*candidates.length)]||{x:N-3,y:N-3};let pos=worldPos(p.x,p.y);
- enemy=new THREE.Group();enemy.position.set(pos.x,0,pos.z);
- let body=new THREE.Mesh(new THREE.CapsuleGeometry(.48,.9,4,8),mat(0x101311,.8,0x190d0d,.2));body.position.y=1;enemy.add(body);
- let face=new THREE.Mesh(new THREE.SphereGeometry(.43,16,12),mat(0xdce9d4,.25,0xb9ffc4,.7));face.scale.set(1,.8,.25);face.position.set(0,1.8,-.23);enemy.add(face);
- let eyeMat=mat(0x101010,.2);for(let x of [-.16,.16]){let eye=new THREE.Mesh(new THREE.SphereGeometry(.055,8,8),eyeMat);eye.position.set(x,1.84,-.46);enemy.add(eye)}
- let glow=new THREE.PointLight(0x9bff9c,.5,5);glow.position.y=1.7;enemy.add(glow);scene.add(enemy);enemy.userData.speed=cfg.speed;enemy.userData.lastSeen=0;
-}
-function showToast(s){$('toast').textContent=s;$('toast').style.opacity=1;toastTimer=2.1}
-function startGame(){level=1;buildLevel();$('overlay').style.display='none';$('hud').style.display='block';running=true;paused=false;renderer.domElement.requestPointerLock?.();clock.getDelta()}
-function endGame(won){running=false;document.exitPointerLock?.();$('end').style.display='flex';$('endeyebrow').textContent=won?'SUBLEVEL CLEARED':'SIGNAL LOST';$('endtitle').textContent=won?'YOU MADE IT.':'YOU WERE FOUND.';$('endtext').textContent=won?`Sublevel ${level} complete. The next one is already waiting.`:'The corridors have gone quiet. Your signal has not.'}
-function pauseGame(){if(!running)return;paused=true;$('pause').style.display='flex';document.exitPointerLock?.()}
-function resumeGame(){paused=false;$('pause').style.display='none';renderer.domElement.requestPointerLock?.()}
-function isBlocked(x,z){let gx=Math.round(x/cellSize+(N-1)/2),gy=Math.round(z/cellSize+(N-1)/2);if(gx<0||gy<0||gx>=N||gy>=N||maze[gy][gx])return true;return false}
-function movePlayer(dt){
- let forward=(keys.KeyW?1:0)-(keys.KeyS?1:0),side=(keys.KeyD?1:0)-(keys.KeyA?1:0);let mag=Math.hypot(forward,side)||1;forward/=mag;side/=mag;
- let sprint=keys.ShiftLeft||keys.ShiftRight;let canSprint=sprint&&player.stamina>1&&(forward||side);let speed=canSprint?5.5:3.35;
- if(canSprint)player.stamina=Math.max(0,player.stamina-29*dt);else player.stamina=Math.min(100,player.stamina+18*dt);
- let dx=(Math.sin(player.yaw)*forward+Math.cos(player.yaw)*side)*speed*dt;
- let dz=(-Math.cos(player.yaw)*forward+Math.sin(player.yaw)*side)*speed*dt;
- if(!isBlocked(player.x+dx,player.z))player.x+=dx;if(!isBlocked(player.x,player.z+dz))player.z+=dz;
- camera.position.set(player.x,1.65+((forward||side)?Math.sin(performance.now()*.012)*.025:0),player.z);
- camera.rotation.order='YXZ';camera.rotation.y=player.yaw;camera.rotation.x=player.pitch;
- walkTime+=dt*(canSprint?1.6:1);
-}
-function updateEnemy(dt){
- if(!enemy)return;let dx=player.x-enemy.position.x,dz=player.z-enemy.position.z,dist=Math.hypot(dx,dz);let cfg=MODES[selected];
- let sees=dist<cfg.vision;let speed=enemy.userData.speed*(sees?1:.58);if(selected==='INSANE'||selected==='???')speed*=sees?1.15:1;
- // Grid-guided pursuit: chase through corridors, not through walls.
- enemyPathTimer-=dt;if(enemyPathTimer<=0){enemyPathTimer=.28;let ex=Math.round(enemy.position.x/cellSize+(N-1)/2),ey=Math.round(enemy.position.z/cellSize+(N-1)/2),px=Math.round(player.x/cellSize+(N-1)/2),py=Math.round(player.z/cellSize+(N-1)/2);
- let q=[[ex,ey]],prev=new Map([[ex+','+ey,null]]),found=null;for(let qi=0;qi<q.length&&qi<500;qi++){let [x,y]=q[qi];if(x===px&&y===py){found=[x,y];break}for(let [ax,ay] of [[1,0],[-1,0],[0,1],[0,-1]]){let nx=x+ax,ny=y+ay,k=nx+','+ny;if(nx>=0&&ny>=0&&nx<N&&ny<N&&!maze[ny][nx]&&!prev.has(k)){prev.set(k,[x,y]);q.push([nx,ny])}}}
- if(found){let cur=found,k=cur[0]+','+cur[1];while(prev.get(k)&&!(prev.get(k)[0]===ex&&prev.get(k)[1]===ey)){cur=prev.get(k);k=cur[0]+','+cur[1]}let target=worldPos(cur[0],cur[1]);enemy.userData.tx=target.x;enemy.userData.tz=target.z}else{enemy.userData.tx=player.x;enemy.userData.tz=player.z}}
- let tx=enemy.userData.tx??player.x,tz=enemy.userData.tz??player.z,ex=tx-enemy.position.x,ez=tz-enemy.position.z,ed=Math.hypot(ex,ez);
- if(ed>.12){enemy.position.x+=ex/ed*speed*dt;enemy.position.z+=ez/ed*speed*dt}
- enemy.lookAt(player.x,1,player.z);enemy.position.y=Math.sin(performance.now()*.004)*.035;
- if(dist<1.45&&performance.now()-lastDamage>850){player.hp-=cfg.damage;lastDamage=performance.now();showToast('IT FOUND YOU. KEEP MOVING.');if(player.hp<=0)endGame(false)}
-}
-function updatePickups(){
- for(let i=cells.length-1;i>=0;i--){let c=cells[i];c.rotation.y+=.025;c.position.y=.65+Math.sin(performance.now()*.003+i)*.08;if(Math.hypot(c.position.x-player.x,c.position.z-player.z)<1.25){scene.remove(c);cells.splice(i,1);cellCount++;$('objective').textContent=`FIND ${MODES[selected].cell} POWER CELLS // ${cellCount} / ${MODES[selected].cell}`;showToast('POWER CELL ACQUIRED');if(cellCount>=MODES[selected].cell){exitUnlocked=true;showToast('EXIT POWER RESTORED');exitObj.children[0].material.emissive.setHex(0x44ff88);exitObj.children[0].material.emissiveIntensity=1.8;}}}
- let ep=exitObj.position;if(Math.hypot(ep.x-player.x,ep.z-player.z)<1.8){if(exitUnlocked){if(level>=5)endGame(true);else{level++;buildLevel();showToast('SUBLEVEL '+String(level).padStart(2,'0')+' — DESCENDING')}}else $('prompt').textContent='EXIT LOCKED — POWER CELLS REQUIRED'}
-}
-function updateHUD(dt){ $('healthfill').style.width=Math.max(0,player.hp)+'%';$('stamfill').style.width=player.stamina+'%';$('prompt').textContent='';if(toastTimer>0){toastTimer-=dt;if(toastTimer<=0)$('toast').style.opacity=0}}
-function loop(){requestAnimationFrame(loop);if(!renderer)return;let dt=Math.min(clock.getDelta(),.05);if(running&&!paused){movePlayer(dt);updateEnemy(dt);updatePickups();camera.userData.flash.intensity=flashOn?2.2:0;scene.fog.density=MODES[selected].light<.4?.055:.035;updateHUD(dt)}renderer.render(scene,camera)}
-$('modes').addEventListener('click',e=>{let b=e.target.closest('[data-mode]');if(!b)return;selected=b.dataset.mode;document.querySelectorAll('.mode[data-mode]').forEach(x=>x.classList.toggle('selected',x===b))});
-$('start').onclick=startGame;$('resume').onclick=resumeGame;$('restart').onclick=()=>{ $('pause').style.display='none';buildLevel();paused=false;renderer.domElement.requestPointerLock?.()};$('menu').onclick=()=>{running=false;paused=false;$('pause').style.display='none';$('hud').style.display='none';$('overlay').style.display='flex';document.exitPointerLock?.()};$('again').onclick=()=>{$('end').style.display='none';startGame()};
-document.addEventListener('keydown',e=>{keys[e.code]=true;if(e.code==='Escape'&&running&&!paused)pauseGame();if(e.code==='KeyF'&&running){flashOn=!flashOn;showToast(flashOn?'FLASHLIGHT ON':'FLASHLIGHT OFF')}});
+// living room rug and furniture
+cube('rug',-2.3,.025,1.2,3.4,.035,2.5,rugMat,false);
+cube('sofa base',-3.6,.48,-.1,1.65,.65,.75,mat(0x3c4146));
+cube('sofa back',-3.6,1.05,-.48,1.7,.75,.22,mat(0x4b5158));
+for(let x of [-4.25,-2.95]) cube('sofa arm',x,.8,-.1,.22,.75,.8,mat(0x343a40));
+cube('coffee table',-2.4,.48,-.15,1.5,.12,.85,wood);
+for(let x of [-3,-1.8]) for(let z of [-.45,.15]) cube('table leg',x,.23,z,.08,.48,.08,trim);
+cube('TV stand',3.6,.55,-4.8,2.1,.75,.65,wood);
+cube('television',3.6,1.55,-5.05,1.75,1.15,.12,mat(0x030609,.25));
+const tvGlow=new THREE.PointLight(0x7394c8,.55,3);tvGlow.position.set(3.6,1.6,-4.5);scene.add(tvGlow);
+// side table + telephone
+cube('telephone table',-3.8,.65,-3.2,.9,.12,.7,wood);
+for(let x of [-4.15,-3.45]) for(let z of [-3.45,-2.95]) cube('table leg',x,.32,z,.07,.62,.07,trim);
+const phone=cube('phone',-3.8,.82,-3.2,.48,.18,.3,mat(0x17191d,.35));
+const phoneBase=cube('phone base',-3.8,.72,-3.2,.6,.08,.38,mat(0x111317,.4));
+const phoneLight=new THREE.PointLight(0xff3434,0,2);phoneLight.position.set(-3.8,1.1,-3.2);scene.add(phoneLight);
+// clock
+cube('clock body',0,2.7,-5.72,1.25,.82,.16,trim);
+const clockFace=new THREE.Mesh(new THREE.CircleGeometry(.33,32),mat(0xe2d9c5));clockFace.position.set(0,2.72,-5.62);scene.add(clockFace);
+for(let i=0;i<12;i++){const a=i*Math.PI/6;const dot=cube('clock mark',Math.sin(a)*.26,2.72+Math.cos(a)*.26,-5.6,.025,.025,.025,trim,false);}
+const hand1=cube('clock hand',-.06,2.76,-5.58,.18,.018,.018,trim,false);hand1.rotation.z=-.6;
+const hand2=cube('clock hand',.03,2.82,-5.57,.018,.22,.018,trim,false);hand2.rotation.z=.15;
+// ceiling fixture
+cube('ceiling lamp',-2.2,3.88,-2.5,.55,.08,.55,mat(0x9c8061,.4));
+const ceilingLight=new THREE.PointLight(0xffc88a,.65,7);ceilingLight.position.set(-2.2,3.45,-2.5);scene.add(ceilingLight);
+// scattered props
+cube('books',2.3,.18,1.5,.7,.28,.5,mat(0x59413a));
+cube('cabinet',4.8,1.05,2.3,.85,2.1,.8,wood);
+cube('cabinet top',4.8,2.15,2.3,.95,.1,.9,trim);
+const plant=cube('plant pot',4.4,.35,-.9,.38,.55,.38,mat(0x6b4937));
+for(let i=0;i<5;i++){const leaf=new THREE.Mesh(new THREE.ConeGeometry(.13,.9,5),mat(0x243c30));leaf.position.set(4.4+(Math.random()-.5)*.4,.95,-.9+(Math.random()-.5)*.4);leaf.rotation.z=(Math.random()-.5)*.8;scene.add(leaf);}
+// outside silhouette shapes through window
+for(let i=0;i<9;i++){const t=cube('tree',-7+i*1.7,1.5,-8.3,.3,3+Math.random()*2,.3,mat(0x101b1b));t.rotation.z=(Math.random()-.5)*.15;}
+
+const colliders=[
+ {x:-6,z:0,sx:.25,sz:12},{x:6,z:0,sx:.25,sz:12},{x:0,z:-6,sx:12,sz:.25},
+ {x:0,z:-1.7,sx:5.8,sz:.22,y:0,door:true},
+ {x:-1.55,z:-4,sx:.15,sz:4.2},{x:1.55,z:-4,sx:.15,sz:4.2}
+];
+const keys={};let yaw=0,pitch=0,locked=false,started=false,phoneDone=false,clockDone=false,ending=false;
+const start=document.getElementById('start'), prompt=document.getElementById('prompt'),promptText=document.getElementById('promptText');
+const toastEl=document.getElementById('toast');
+function toast(s){toastEl.textContent=s;toastEl.classList.add('show');setTimeout(()=>toastEl.classList.remove('show'),2400)}
+function lock(){renderer.domElement.requestPointerLock?.()}
+document.getElementById('play').onclick=()=>{started=true;start.style.display='none';lock();toast('THE PHONE IS RINGING. FIND IT.')};
+document.getElementById('again').onclick=()=>location.reload();
+document.addEventListener('pointerlockchange',()=>locked=document.pointerLockElement===renderer.domElement);
+document.addEventListener('mousemove',e=>{if(!locked)return;yaw-=e.movementX*.0022;pitch-=e.movementY*.0022;pitch=Math.max(-1.35,Math.min(1.35,pitch));});
+document.addEventListener('keydown',e=>{
+ keys[e.code]=true;
+ if(e.code==='KeyF'&&started){lightOn=!lightOn;flashlight.visible=lightOn;toast(lightOn?'FLASHLIGHT ON':'FLASHLIGHT OFF')}
+ if(e.code==='KeyE'&&started)interact();
+});
 document.addEventListener('keyup',e=>keys[e.code]=false);
-document.addEventListener('mousemove',e=>{if(!locked||!running||paused)return;player.yaw-=e.movementX*.0022;player.pitch=Math.max(-1.35,Math.min(1.35,player.pitch-e.movementY*.0022))});
-document.addEventListener('pointerlockchange',()=>{locked=document.pointerLockElement===renderer?.domElement;if(running&&!locked&&!paused)pauseGame()});
-addEventListener('resize',()=>{if(!camera)return;camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
-init3D();loop();
-})();
+document.addEventListener('click',()=>{if(started&&!locked&&!ending&&start.style.display==='none')lock()});
+function interact(){
+ if(!nearby)return;
+ if(nearby==='phone'&&!phoneDone){
+   phoneDone=true;phoneDone=true;phoneLight.intensity=0;phone.material=mat(0x292d31);
+   document.getElementById('objectiveText').textContent='Check the clock in the hallway.';
+   document.getElementById('objectiveHint').textContent='The caller knew your name. The clock is making a strange noise.';
+   toast('CALL ENDED. “DON’T LOOK OUTSIDE.”');
+ } else if(nearby==='clock'&&phoneDone&&!clockDone){
+   clockDone=true;toast('THE SECOND HAND MOVES BACKWARDS.');
+   document.getElementById('objectiveText').textContent='Get out. Now.';
+   document.getElementById('objectiveHint').textContent='Something is standing beyond the front door.';
+   setTimeout(()=>{if(!ending){ending=true;document.exitPointerLock?.();document.getElementById('ending').style.display='grid'}},5000);
+ } else if(nearby==='clock'&&!phoneDone){toast('6:06. THE CLOCK HAS STOPPED.');}
+}
+let nearby=null;
+function updateNearby(){
+ nearby=null;let label='';
+ const p=camera.position;
+ const dphone=p.distanceTo(new THREE.Vector3(-3.8,1,-3.2));
+ const dclock=p.distanceTo(new THREE.Vector3(0,2.7,-5.5));
+ if(dphone<2.2&&!phoneDone){nearby='phone';label='ANSWER THE PHONE'}
+ else if(dclock<2.3){nearby='clock';label='INSPECT THE CLOCK'}
+ promptText.textContent=label;prompt.classList.toggle('show',!!nearby);
+}
+let prev=performance.now(),step=0;
+function animate(now){
+ requestAnimationFrame(animate);const dt=Math.min((now-prev)/1000,.04);prev=now;
+ if(started&&!ending){
+   camera.rotation.order='YXZ';camera.rotation.y=yaw;camera.rotation.x=pitch;
+   const forward=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw));
+   const right=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));
+   let move=new THREE.Vector3();
+   if(keys.KeyW||keys.ArrowUp)move.add(forward);if(keys.KeyS||keys.ArrowDown)move.sub(forward);
+   if(keys.KeyD||keys.ArrowRight)move.add(right);if(keys.KeyA||keys.ArrowLeft)move.sub(right);
+   if(move.lengthSq()>0){move.normalize().multiplyScalar((keys.ShiftLeft?4.4:2.65)*dt);
+     const nx=camera.position.x+move.x,nz=camera.position.z+move.z;
+     if(Math.abs(nx)<5.65)camera.position.x=nx;
+     if(nz>-5.65&&nz<5.65)camera.position.z=nz;
+     // keep the player from walking through the solid partition, except through the doorway
+     if(camera.position.z<-1.55&&camera.position.z>-1.9&&Math.abs(camera.position.x)>.98)camera.position.z=-1.52;
+     if(camera.position.z<-1.8&&Math.abs(camera.position.x)>1.42){camera.position.z=-1.75}
+   }
+   camera.position.y=1.65;
+   updateNearby();
+   step+=dt;
+   phoneLight.intensity=phoneDone?0:(.3+Math.sin(now*.008)*.25);
+   if(!phoneDone)phone.rotation.y=Math.sin(now*.001)*.08;
+   ceilingLight.intensity=.58+Math.sin(now*.003)*.06;
+   if(clockDone){hand1.rotation.z-=dt*1.8;hand2.rotation.z-=dt*2.8;}
+ }
+ renderer.render(scene,camera);
+}
+requestAnimationFrame(animate);
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 </script>
 </body>
 </html>
